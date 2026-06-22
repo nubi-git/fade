@@ -1,0 +1,27 @@
+---
+interface Props {
+  label?: string;
+  loadingLabel?: string;
+  variant?: "primary" | "ghost";
+  fullWidth?: boolean;
+}
+const { label = "Guardar", loadingLabel = "Guardando…", variant = "primary", fullWidth = false } = Astro.props;
+const base =
+  variant === "primary"
+    ? "bg-accent text-white hover:bg-accent-hover"
+    : "border border-line text-ink hover:bg-surface";
+---
+
+<button
+  type="submit"
+  data-submit
+  data-loading-label={loadingLabel}
+  class:list={[
+    "inline-flex items-center justify-center gap-2 rounded-md px-6 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70",
+    base,
+    fullWidth && "w-full",
+  ]}
+>
+  <span class="btn-spinner hidden" data-spinner aria-hidden="true"></span>
+  <span data-label>{label}</span>
+</button>

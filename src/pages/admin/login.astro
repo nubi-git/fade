@@ -1,0 +1,66 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { eq } from "drizzle-orm";
+import { db } from "../../lib/db";
+import { users } from "../../lib/db/schema";
+import { SESSION_COOKIE, createSession, verifyPassword } from "../../lib/auth";
+import { getClientIp, rateLimit } from "../../lib/security";
+import TextInput from "../../components/form/TextInput.astro";
+import SubmitButton from "../../components/form/SubmitButton.astro";
+import FormEnhancer from "../../components/form/FormEnhancer.astro";
+
+let error = "";
+let email = "";
+
+if (Astro.request.method === "POST") {
+  const ip = getClientIp(Astro.request);
+  const limited = rateLimit(`login:${ip}`, 5, 60_000); // 5 intentos por minuto
+
+  if (!limited.ok) {
+    error = `Demasiados intentos. Probá de nuevo en ${limited.retryAfter} segundos.`;
+  } else {
+    const form = await Astro.request.formData();
+    email = String(form.get("email") ?? "").trim().toLowerCase();
+    const password = String(form.get("password") ?? "");
+
+    if (!email || !password) {
+      error = "Completá email y contraseña.";
+    } else {
+    const row = (await db.select().from(users).where(eq(users.email, email)).limit(1))[0];
+    if (row && (await verifyPassword(password, row.passwordHash))) {
+      const session = await createSession(row.id);
+      Astro.cookies.set(SESSION_COOKIE, session.id, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: import.meta.env.SECURE_COOKIES === "true",
+        path: "/",
+        expires: session.expiresAt,
+      });
+        return Astro.redirect("/admin");
+      }
+      error = "Credenciales inválidas.";
+    }
+  }
+}
+---
+
+<AdminLayout title="Ingresar">
+  <div class="mx-auto mt-10 max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
+    <img src="/images/logos/fade/logo_fade.png" alt="FADE Ingeniería" class="mb-6 h-12 w-auto" />
+    <h1 class="text-2xl font-extrabold text-ink">Panel de contenidos</h1>
+    <p class="mt-1 text-sm text-body">Ingresá con tu cuenta autorizada.</p>
+
+    {error && (
+      <p class="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+    )}
+
+    <form method="POST" class="mt-6 space-y-4" data-enhanced novalidate>
+      <TextInput label="Email" name="email" type="email" value={email} required autocomplete="username" />
+      <TextInput label="Contraseña" name="password" type="password" required autocomplete="current-password" />
+      <div class="pt-1">
+        <SubmitButton label="Ingresar" loadingLabel="Ingresando…" fullWidth />
+      </div>
+      <FormEnhancer />
+    </form>
+  </div>
+</AdminLayout>

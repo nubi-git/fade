@@ -1,0 +1,187 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { contactSchema, parseForm, type FieldErrors } from "../lib/validation";
+import { getSettings } from "../lib/settings";
+import { isMailConfigured, sendContactEmail } from "../lib/mailer";
+import { TURNSTILE_SITE_KEY, isTurnstileConfigured, verifyTurnstile } from "../lib/turnstile";
+import { getClientIp, rateLimit } from "../lib/security";
+
+const turnstileOn = isTurnstileConfigured();
+
+let errors: FieldErrors = {};
+let sent = false;
+const values = { nombre: "", empresa: "", cargo: "", email: "", cod: "", telefono: "", mensaje: "" };
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  for (const k of Object.keys(values) as (keyof typeof values)[]) {
+    values[k] = String(form.get(k) ?? "");
+  }
+
+  const limited = rateLimit(`contact:${getClientIp(Astro.request)}`, 3, 60_000); // 3 envíos/min
+
+  // Honeypot antispam: si "website" viene relleno, lo ignoramos en silencio.
+  if (String(form.get("website") ?? "")) {
+    sent = true;
+  } else if (!limited.ok) {
+    errors._form = `Demasiados envíos. Esperá ${limited.retryAfter} segundos e intentá de nuevo.`;
+  } else {
+    const parsed = parseForm(contactSchema, form);
+    const captchaOk = await verifyTurnstile(
+      String(form.get("cf-turnstile-response") ?? ""),
+      Astro.request.headers.get("cf-connecting-ip")
+    );
+    if (!parsed.success) {
+      errors = parsed.errors;
+    } else if (!captchaOk) {
+      errors._form = "No pudimos verificar que no seas un robot. Reintentá la verificación.";
+    } else {
+      try {
+        const settings = await getSettings().catch(() => ({}) as Record<string, string>);
+        const to = settings.contact_email || import.meta.env.SMTP_FROM || import.meta.env.SMTP_USER;
+        if (!isMailConfigured() || !to) {
+          errors._form = "El envío de correo no está configurado. Escribinos directamente por email.";
+        } else {
+          const cod = String(form.get("cod") ?? "").trim();
+          const telefono = [cod, parsed.data.telefono].filter(Boolean).join(" ").trim() || null;
+          await sendContactEmail(to, { ...parsed.data, telefono });
+          sent = true;
+        }
+      } catch (e) {
+        errors._form = "No pudimos enviar el mensaje. Intentá de nuevo más tarde.";
+      }
+    }
+  }
+}
+
+const inputBase =
+  "mt-1.5 block w-full min-w-0 rounded-md border border-line px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand";
+const phoneInput =
+  "min-w-0 rounded-md border border-line px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand";
+
+const office = {
+  title: "Nuestra Oficina",
+  address: "Montevideo 217, Piso 11 Depto B, Ciudad Autónoma de Buenos Aires.",
+  query: "Montevideo 217, Ciudad Autónoma de Buenos Aires, Argentina",
+};
+const depot = {
+  title: "Nuestro Depósito de Materiales",
+  address: "Pozo de Vargas 2315, Ing. Pablo Nogues, Malvinas Argentinas - Bs. As.",
+  query: "Pozo de Vargas 2315, Ingeniero Pablo Nogués, Malvinas Argentinas, Buenos Aires, Argentina",
+};
+const mapSrc = (q: string) => `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+---
+
+<Layout title="Contacto — FADE Ingeniería">
+  <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10">
+    <!-- Encabezado -->
+    <div data-reveal-group data-reveal-stagger="90">
+      <h1 class="text-3xl font-extrabold leading-tight text-ink sm:text-5xl">Contacto</h1>
+      <p class="mt-3 max-w-xl text-base text-body sm:text-lg">
+        Completá el formulario y nuestro equipo se contactará a la brevedad para brindarte
+        asesoramiento.
+      </p>
+    </div>
+
+    <div class="mt-8 grid gap-8 sm:mt-12 lg:grid-cols-2 lg:gap-12">
+      <!-- Formulario -->
+      {sent ? (
+        <div class="min-w-0 rounded-2xl border border-line bg-white p-8 text-center shadow-sm" data-reveal="fade-up">
+          <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h2 class="mt-4 text-xl font-bold text-ink">¡Mensaje enviado!</h2>
+          <p class="mt-2 text-body">Gracias por escribirnos. Te vamos a responder a la brevedad.</p>
+        </div>
+      ) : (
+        <form method="POST" class="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-7" data-reveal="fade-up" novalidate>
+          {errors._form && (
+            <p class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">{errors._form}</p>
+          )}
+          <div class="space-y-4">
+            {/* Honeypot antispam (oculto a usuarios) */}
+            <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+
+            <label class="block">
+              <span class="text-sm font-medium text-ink">Nombre completo</span>
+              <input type="text" name="nombre" value={values.nombre} required placeholder="Lucas Fernandez" class={inputBase} aria-invalid={errors.nombre ? "true" : undefined} />
+              {errors.nombre && <p class="field-error" role="alert">{errors.nombre}</p>}
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink">Empresa</span>
+              <input type="text" name="empresa" value={values.empresa} placeholder="Innovaciones Creativas S.A." class={inputBase} />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink">Cargo</span>
+              <input type="text" name="cargo" value={values.cargo} placeholder="Manager" class={inputBase} />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-ink">Email</span>
+              <input type="email" name="email" value={values.email} required placeholder="ejemplo@mail.com" class={inputBase} aria-invalid={errors.email ? "true" : undefined} />
+              {errors.email && <p class="field-error" role="alert">{errors.email}</p>}
+            </label>
+            <div>
+              <span class="text-sm font-medium text-ink">Teléfono</span>
+              <div class="mt-1.5 flex gap-3">
+                <input type="text" name="cod" value={values.cod} placeholder="+ 00" class={`w-20 shrink-0 ${phoneInput}`} />
+                <input type="tel" name="telefono" value={values.telefono} placeholder="00 0000 0000" class={`flex-1 ${phoneInput}`} />
+              </div>
+            </div>
+            <label class="block">
+              <span class="text-sm font-medium text-ink">Mensaje</span>
+              <textarea name="mensaje" rows="4" required placeholder="Escriba su mensaje..." class={inputBase} aria-invalid={errors.mensaje ? "true" : undefined}>{values.mensaje}</textarea>
+              {errors.mensaje && <p class="field-error" role="alert">{errors.mensaje}</p>}
+            </label>
+
+            {turnstileOn && (
+              <div class="flex justify-center pt-1">
+                <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="light"></div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              class="mt-1 w-full rounded-md bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+            >
+              Enviar
+            </button>
+          </div>
+        </form>
+      )}
+
+      <!-- Datos de contacto + mapas -->
+      <div class="min-w-0" data-reveal="fade-up" data-reveal-delay="120">
+        <h2 class="text-lg font-bold text-ink">Contactanos por correo o teléfono:</h2>
+        <p class="mt-2 break-words text-body">
+          Podés escribirnos a
+          <a href="mailto:info@fadeingenieria.com.ar" class="font-semibold break-all text-accent hover:underline">info@fadeingenieria.com.ar</a>
+          o comunicarte telefónicamente al
+          <a href="tel:+541120741602" class="whitespace-nowrap font-semibold text-accent hover:underline">(+54) 11-2074-1602</a>
+          y les brindaremos detalles sobre nuestras soluciones
+        </p>
+
+        <div class="mt-8 grid gap-6 sm:grid-cols-2">
+          {[office, depot].map((loc) => (
+            <div class="min-w-0">
+              <h3 class="text-sm font-bold text-ink">{loc.title}</h3>
+              <div class="mt-3 aspect-[4/3] w-full overflow-hidden rounded-lg border border-line">
+                <iframe
+                  src={mapSrc(loc.query)}
+                  title={loc.title}
+                  class="block h-full w-full max-w-full border-0"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+              <p class="mt-3 text-sm text-body">{loc.address}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {turnstileOn && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  )}
+</Layout>

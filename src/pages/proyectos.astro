@@ -1,0 +1,182 @@
+---
+import Layout from '../layouts/Layout.astro'
+import ContactCta from '../components/ContactCta.astro'
+import ProjectCard from '../components/ProjectCard.astro'
+import { db } from '../lib/db'
+import { projects as projectsTable } from '../lib/db/schema'
+import { eq, desc } from 'drizzle-orm'
+import { getSettings } from '../lib/settings'
+
+const settings = await getSettings().catch(() => ({}) as Record<string, string>)
+const planillaUrl = settings.planilla_url
+
+const rows = await db
+  .select()
+  .from(projectsTable)
+  .where(eq(projectsTable.published, true))
+  .orderBy(desc(projectsTable.sortOrder), desc(projectsTable.createdAt))
+
+const projects = rows.map((p) => ({
+  name: p.name,
+  type: p.type,
+  year: p.year ?? '',
+  img: p.coverImage ?? '/images/obras/Project image.png',
+  href: `/proyecto/${p.slug}`,
+}))
+---
+
+<Layout title="Obras & Proyectos — FADE Ingeniería">
+  <!-- Hero -->
+  <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
+    <img
+      src="/images/fondos/obras_y_servicios_hero.png"
+      alt=""
+      data-parallax="0.1"
+      class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
+    />
+    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-brand-dark/85 via-ink/80 to-black/80">
+    </div>
+    <div class="mx-auto w-full max-w-7xl px-6 lg:px-10" data-reveal-group data-reveal-stagger="120">
+      <p class="text-sm font-semibold uppercase tracking-widest text-white/70">Obras & proyectos</p>
+      <h1
+        class="mt-2 max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl"
+      >
+        Proyectos que respaldan nuestra experiencia
+      </h1>
+      <p class="mt-6 max-w-xl text-lg text-white/80">
+        Una selección de obras ejecutadas con compromiso técnico y profesional.
+      </p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+    <div id="projects-grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+      {projects.map((p, i) => (
+        <div class="project-item" data-index={i}>
+          <ProjectCard {...p} />
+        </div>
+      ))}
+    </div>
+
+    <!-- Paginación -->
+    <nav
+      id="pagination"
+      class="mt-14 flex items-center justify-center gap-3"
+      aria-label="Paginación de proyectos"
+      data-per-page="6"
+    >
+    </nav>
+  </section>
+
+  <script>
+    const grid = document.getElementById("projects-grid");
+    const nav = document.getElementById("pagination");
+    if (grid && nav) {
+      const items = Array.from(grid.querySelectorAll<HTMLElement>(".project-item"));
+      const perPage = Number(nav.dataset.perPage) || 6;
+      const pages = Math.max(1, Math.ceil(items.length / perPage));
+      let current = 1;
+
+      const circle =
+        "inline-flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors";
+      const arrow =
+        "inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-30";
+
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let first = true; // la primera aparición la maneja el scroll-reveal del grid
+
+      function render() {
+        // Mostrar solo los proyectos de la página actual, con animación al cambiar de página
+        let shown = 0;
+        items.forEach((el, i) => {
+          const page = Math.floor(i / perPage) + 1;
+          const visible = page === current;
+          el.style.display = visible ? "" : "none";
+          if (visible && !reduced && !first) {
+            el.classList.remove("page-in");
+            void el.offsetWidth; // reinicia la animación
+            el.style.animationDelay = `${shown * 60}ms`;
+            el.classList.add("page-in");
+            shown++;
+          }
+        });
+
+        // Construir controles
+        nav.innerHTML = "";
+
+        const prev = document.createElement("button");
+        prev.className = arrow;
+        prev.setAttribute("aria-label", "Anterior");
+        prev.innerHTML =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        prev.disabled = current === 1;
+        prev.onclick = () => { if (current > 1) { current--; render(); } };
+        nav.appendChild(prev);
+
+        for (let p = 1; p <= pages; p++) {
+          const btn = document.createElement("button");
+          btn.textContent = String(p);
+          btn.className =
+            circle +
+            (p === current
+              ? " border-accent bg-accent text-white"
+              : " border-line text-body hover:border-accent hover:text-accent");
+          if (p === current) btn.setAttribute("aria-current", "page");
+          btn.onclick = () => { current = p; render(); };
+          nav.appendChild(btn);
+        }
+
+        const next = document.createElement("button");
+        next.className = arrow;
+        next.setAttribute("aria-label", "Siguiente");
+        next.innerHTML =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        next.disabled = current === pages;
+        next.onclick = () => { if (current < pages) { current++; render(); } };
+        nav.appendChild(next);
+      }
+
+      render();
+      first = false;
+    }
+  </script>
+
+  <!-- CTA +150 obras -->
+  <section
+    class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center justify-center overflow-hidden text-center text-white"
+  >
+    <!--
+      Background: idealmente un video institucional / multiobra (autoplay + loop).
+      Para usar video, dejá el archivo en /public/videos/obras.mp4 y descomentá el <video>.
+    -->
+    <!--
+    <video
+      class="absolute inset-0 -z-20 h-full w-full object-cover"
+      autoplay muted loop playsinline
+      poster="/images/fondos/brochure_section_image.png"
+    >
+      <source src="/videos/obras.mp4" type="video/mp4" />
+    </video>
+    -->
+    <img
+      src="/images/fondos/brochure_section_image.png"
+      alt=""
+      data-parallax="0.1"
+      class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
+    />
+    <div class="absolute inset-0 -z-10 bg-black/35"></div>
+    <div class="mx-auto flex max-w-3xl flex-col items-center gap-5 px-6 py-24" data-reveal-group data-reveal-stagger="120">
+      <h2 class="text-4xl font-extrabold text-white drop-shadow-lg sm:text-6xl">
+        +150 obras realizadas
+      </h2>
+      <p class="text-lg text-white/90 drop-shadow">Descargá la planilla y conocé todas</p>
+      {planillaUrl ? (
+        <a href={planillaUrl} target="_blank" rel="noopener" download class="btn mt-4 shadow-lg">Descargar</a>
+      ) : (
+        <span class="btn mt-4 shadow-lg opacity-60" aria-disabled="true">Próximamente</span>
+      )}
+    </div>
+  </section>
+
+  <ContactCta />
+</Layout>

@@ -1,0 +1,109 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ProjectForm from "../../../components/admin/ProjectForm.astro";
+import GalleryManager from "../../../components/admin/GalleryManager.astro";
+import { db } from "../../../lib/db";
+import { projects, projectImages } from "../../../lib/db/schema";
+import { eq, asc } from "drizzle-orm";
+import { saveUpload, deleteUpload } from "../../../lib/uploads";
+import { newId } from "../../../lib/auth";
+import { projectSchema, parseForm, type FieldErrors } from "../../../lib/validation";
+import { projectValuesFromProject, projectValuesFromForm } from "../../../lib/adminForms";
+
+const { id } = Astro.params;
+let project = (await db.select().from(projects).where(eq(projects.id, id!)).limit(1))[0];
+if (!project) return Astro.redirect("/admin/projects");
+
+let values = projectValuesFromProject(project);
+let errors: FieldErrors = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = form.get("_action");
+
+  if (action === "delete") {
+    // Borrar archivos físicos (galería + portada) antes de eliminar el proyecto
+    const imgs = await db.select().from(projectImages).where(eq(projectImages.projectId, project.id));
+    await Promise.all([
+      ...imgs.map((i) => deleteUpload(i.url)),
+      deleteUpload(project.coverImage),
+    ]);
+    await db.delete(projects).where(eq(projects.id, project.id));
+    return Astro.redirect("/admin/projects");
+  }
+
+  if (action === "delImage") {
+    const imgId = String(form.get("imageId") ?? "");
+    if (imgId) {
+      const img = (await db.select().from(projectImages).where(eq(projectImages.id, imgId)).limit(1))[0];
+      if (img) {
+        await db.delete(projectImages).where(eq(projectImages.id, imgId));
+        await deleteUpload(img.url);
+      }
+    }
+    return Astro.redirect(`/admin/projects/${project.id}`);
+  }
+
+  // Reordenar galería (vía fetch); devuelve 204
+  if (action === "reorder") {
+    const ids = String(form.get("order") ?? "").split(",").filter(Boolean);
+    await Promise.all(
+      ids.map((imgId, i) =>
+        db.update(projectImages).set({ sortOrder: i }).where(eq(projectImages.id, imgId))
+      )
+    );
+    return new Response(null, { status: 204 });
+  }
+
+  if (action === "addImages") {
+    const files = form.getAll("images");
+    const current = (await db.select().from(projectImages).where(eq(projectImages.projectId, project.id))).length;
+    let i = 0;
+    for (const f of files) {
+      const url = await saveUpload(f).catch(() => null);
+      if (!url) continue;
+      await db.insert(projectImages).values({
+        id: newId(), projectId: project.id, url, kind: "image", sortOrder: current + i,
+      });
+      i++;
+    }
+    return Astro.redirect(`/admin/projects/${project.id}`);
+  }
+
+  // Guardar datos
+  values = projectValuesFromForm(form);
+  const parsed = parseForm(projectSchema, form);
+  if (!parsed.success) {
+    errors = parsed.errors;
+  } else {
+    try {
+      const cover = await saveUpload(form.get("cover"));
+      if (cover) await deleteUpload(project.coverImage);
+      await db
+        .update(projects)
+        .set({ ...parsed.data, ...(cover ? { coverImage: cover } : {}) })
+        .where(eq(projects.id, project.id));
+      return Astro.redirect("/admin/projects");
+    } catch (e) {
+      errors._form = e instanceof Error ? e.message : "No se pudo guardar.";
+    }
+  }
+}
+
+const gallery = await db
+  .select()
+  .from(projectImages)
+  .where(eq(projectImages.projectId, project.id))
+  .orderBy(asc(projectImages.sortOrder));
+---
+
+<AdminLayout title="Editar proyecto">
+  <a href="/admin/projects" class="text-sm text-body transition-colors hover:text-ink">← Volver</a>
+  <h1 class="mt-2 text-3xl font-extrabold text-ink">Editar proyecto</h1>
+
+  <div class="mt-8 max-w-5xl rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9">
+    <ProjectForm values={values} errors={errors} coverImage={project.coverImage} isEdit />
+  </div>
+
+  <GalleryManager projectId={project.id} images={gallery} />
+</AdminLayout>

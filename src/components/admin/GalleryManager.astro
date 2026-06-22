@@ -1,0 +1,169 @@
+---
+import type { ProjectImage } from "../../lib/db/schema";
+
+interface Props {
+  projectId: string;
+  images: ProjectImage[];
+}
+const { projectId, images } = Astro.props;
+---
+
+<section
+  id="gallery"
+  data-action-url={`/admin/projects/${projectId}`}
+  class="mt-8 max-w-5xl rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9"
+>
+  <h2 class="text-lg font-bold text-ink">Galería de imágenes</h2>
+  <p class="mt-1 text-sm text-body">
+    Se muestran en el carrusel público. Arrastrá para reordenar; el orden se guarda solo.
+  </p>
+
+  <ul
+    id="gallery-grid"
+    class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3"
+    aria-label="Imágenes de la galería (arrastrá para reordenar)"
+  >
+    {images.map((img) => (
+      <li
+        class="group relative cursor-grab overflow-hidden rounded-lg border border-line bg-surface transition active:cursor-grabbing"
+        draggable="true"
+        data-id={img.id}
+      >
+        <img src={img.url} alt="" class="pointer-events-none aspect-[4/3] w-full object-cover" />
+        <span class="absolute left-2 top-2 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+          Arrastrar
+        </span>
+        <form method="POST" class="absolute right-2 top-2">
+          <input type="hidden" name="_action" value="delImage" />
+          <input type="hidden" name="imageId" value={img.id} />
+          <button
+            type="submit"
+            class="rounded-md bg-red-600/90 px-2 py-1 text-xs font-semibold text-white opacity-0 transition hover:bg-red-700 group-hover:opacity-100"
+            data-confirm="Se eliminará esta imagen de la galería."
+            data-confirm-title="Eliminar imagen"
+          >
+            Eliminar
+          </button>
+        </form>
+      </li>
+    ))}
+    {images.length === 0 && (
+      <li class="col-span-full rounded-lg border border-dashed border-line py-10 text-center text-sm text-muted">
+        Todavía no hay imágenes en la galería.
+      </li>
+    )}
+  </ul>
+
+  <!-- Subida con progreso -->
+  <div class="mt-6 rounded-xl border border-dashed border-line p-5">
+    <label class="field-label" for="gallery-files">Agregar imágenes</label>
+    <div class="mt-2 flex flex-wrap items-center gap-3">
+      <input
+        id="gallery-files"
+        type="file"
+        accept="image/*"
+        multiple
+        class="block cursor-pointer text-sm text-body file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+      />
+      <button
+        id="gallery-upload"
+        type="button"
+        class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        Subir imágenes
+      </button>
+    </div>
+    <div id="gallery-progress" class="mt-3 hidden">
+      <div class="h-2 w-full overflow-hidden rounded-full bg-surface">
+        <div id="gallery-bar" class="h-full w-0 rounded-full bg-accent transition-[width] duration-150"></div>
+      </div>
+      <p id="gallery-status" class="mt-1 text-xs text-muted" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const root = document.getElementById("gallery");
+  if (root) {
+    const url = root.dataset.actionUrl!;
+    const grid = document.getElementById("gallery-grid")!;
+
+    /* ---- Reordenar (drag & drop) ---- */
+    let dragEl: HTMLElement | null = null;
+
+    grid.addEventListener("dragstart", (e) => {
+      const li = (e.target as HTMLElement).closest("li[data-id]") as HTMLElement | null;
+      if (!li) return;
+      dragEl = li;
+      li.classList.add("opacity-50");
+      e.dataTransfer!.effectAllowed = "move";
+    });
+
+    grid.addEventListener("dragend", () => {
+      dragEl?.classList.remove("opacity-50");
+      dragEl = null;
+    });
+
+    grid.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const li = (e.target as HTMLElement).closest("li[data-id]") as HTMLElement | null;
+      if (!li || !dragEl || li === dragEl) return;
+      const rect = li.getBoundingClientRect();
+      const after = (e as DragEvent).clientY > rect.top + rect.height / 2;
+      grid.insertBefore(dragEl, after ? li.nextSibling : li);
+    });
+
+    grid.addEventListener("drop", (e) => {
+      e.preventDefault();
+      saveOrder();
+    });
+
+    async function saveOrder() {
+      const ids = Array.from(grid.querySelectorAll<HTMLElement>("li[data-id]")).map((l) => l.dataset.id!);
+      const body = new FormData();
+      body.set("_action", "reorder");
+      body.set("order", ids.join(","));
+      try { await fetch(url, { method: "POST", body }); } catch {}
+    }
+
+    /* ---- Subida con progreso ---- */
+    const input = document.getElementById("gallery-files") as HTMLInputElement;
+    const btn = document.getElementById("gallery-upload") as HTMLButtonElement;
+    const prog = document.getElementById("gallery-progress")!;
+    const bar = document.getElementById("gallery-bar") as HTMLElement;
+    const status = document.getElementById("gallery-status")!;
+
+    btn.addEventListener("click", () => {
+      if (!input.files || input.files.length === 0) {
+        input.click();
+        return;
+      }
+      const body = new FormData();
+      body.set("_action", "addImages");
+      Array.from(input.files).forEach((f) => body.append("images", f));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+      btn.disabled = true;
+      input.disabled = true;
+      prog.classList.remove("hidden");
+
+      xhr.upload.addEventListener("progress", (ev) => {
+        if (!ev.lengthComputable) return;
+        const pct = Math.round((ev.loaded / ev.total) * 100);
+        bar.style.width = pct + "%";
+        status.textContent = `Subiendo… ${pct}%`;
+      });
+      xhr.addEventListener("load", () => {
+        status.textContent = "¡Listo! Actualizando…";
+        location.reload();
+      });
+      xhr.addEventListener("error", () => {
+        status.textContent = "Error al subir. Reintentá.";
+        btn.disabled = false;
+        input.disabled = false;
+      });
+      xhr.send(body);
+    });
+  }
+</script>

@@ -1,0 +1,47 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  type?: "text" | "email" | "password" | "number" | "url" | "tel" | "date" | "search";
+  value?: string | number | null;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  placeholder?: string;
+  autocomplete?: string;
+  min?: number;
+  max?: number;
+}
+const {
+  label, name, type = "text", value = "", error, hint,
+  required = false, placeholder, autocomplete, min, max,
+} = Astro.props;
+
+const id = `f-${name}`;
+const errId = `${id}-error`;
+const hintId = `${id}-hint`;
+const describedBy = [error ? errId : null, hint ? hintId : null].filter(Boolean).join(" ") || undefined;
+---
+
+<div class="field" data-field>
+  <label for={id} class="field-label">
+    {label}{required && <span class="text-red-600" aria-hidden="true"> *</span>}
+  </label>
+  <input
+    id={id}
+    name={name}
+    type={type}
+    class="field-control"
+    value={value ?? ""}
+    required={required}
+    placeholder={placeholder}
+    autocomplete={autocomplete}
+    min={min}
+    max={max}
+    aria-invalid={error ? "true" : undefined}
+    aria-describedby={describedBy}
+    aria-errormessage={error ? errId : undefined}
+  />
+  {hint && <p id={hintId} class="field-hint">{hint}</p>}
+  {error && <p id={errId} class="field-error" role="alert">{error}</p>}
+</div>

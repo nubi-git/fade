@@ -1,0 +1,58 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import MediaForm from "../../../components/admin/MediaForm.astro";
+import { db } from "../../../lib/db";
+import { mediaDocuments } from "../../../lib/db/schema";
+import { eq } from "drizzle-orm";
+import { saveUpload, deleteUpload } from "../../../lib/uploads";
+import { mediaSchema, parseForm, type FieldErrors } from "../../../lib/validation";
+import { mediaValuesFromDoc, mediaValuesFromForm } from "../../../lib/adminForms";
+
+const { id } = Astro.params;
+let doc = (await db.select().from(mediaDocuments).where(eq(mediaDocuments.id, id!)).limit(1))[0];
+if (!doc) return Astro.redirect("/admin/media");
+
+let values = mediaValuesFromDoc(doc);
+let errors: FieldErrors = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+
+  if (form.get("_action") === "delete") {
+    await db.delete(mediaDocuments).where(eq(mediaDocuments.id, doc.id));
+    await deleteUpload(doc.fileUrl);
+    return Astro.redirect("/admin/media");
+  }
+
+  values = mediaValuesFromForm(form);
+  const parsed = parseForm(mediaSchema, form);
+  if (!parsed.success) {
+    errors = parsed.errors;
+  } else {
+    try {
+      const file = form.get("file");
+      const fileUrl = await saveUpload(file);
+      const fileName = fileUrl && file && typeof file !== "string" && file.size > 0 ? file.name : undefined;
+      if (fileUrl) await deleteUpload(doc.fileUrl);
+      await db
+        .update(mediaDocuments)
+        .set({
+          ...parsed.data,
+          ...(fileUrl ? { fileUrl, fileName: fileName ?? null } : {}),
+        })
+        .where(eq(mediaDocuments.id, doc.id));
+      return Astro.redirect("/admin/media");
+    } catch (e) {
+      errors._form = e instanceof Error ? e.message : "No se pudo guardar.";
+    }
+  }
+}
+---
+
+<AdminLayout title="Editar documento">
+  <a href="/admin/media" class="text-sm text-body transition-colors hover:text-ink">← Volver</a>
+  <h1 class="mt-2 text-3xl font-extrabold text-ink">Editar documento</h1>
+  <div class="mt-8 max-w-3xl rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9">
+    <MediaForm values={values} errors={errors} fileUrl={doc.fileUrl} fileName={doc.fileName} isEdit />
+  </div>
+</AdminLayout>

@@ -1,0 +1,63 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import TextInput from "../../components/form/TextInput.astro";
+import SubmitButton from "../../components/form/SubmitButton.astro";
+import FormEnhancer from "../../components/form/FormEnhancer.astro";
+import { getSettings, setSetting } from "../../lib/settings";
+import { isMailConfigured } from "../../lib/mailer";
+import { z } from "zod";
+
+let error = "";
+let saved = false;
+
+const emailSchema = z.string().trim().email("Ingresá un email válido.");
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const result = emailSchema.safeParse(String(form.get("contact_email") ?? ""));
+  if (!result.success) {
+    error = result.error.issues[0]?.message ?? "Email inválido.";
+  } else {
+    await setSetting("contact_email", result.data);
+    saved = true;
+  }
+}
+
+const s = await getSettings();
+const value = s.contact_email ?? "";
+const mailReady = isMailConfigured();
+---
+
+<AdminLayout title="Contacto">
+  <h1 class="text-3xl font-extrabold text-ink">Formulario de contacto</h1>
+  <p class="mt-2 text-body">Email donde se reciben los mensajes enviados desde la web.</p>
+
+  {!mailReady && (
+    <p class="mt-6 max-w-2xl rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800" role="alert">
+      El servidor de correo (SMTP) todavía no está configurado en el archivo <code>.env</code>.
+      Hasta configurarlo, el formulario no podrá enviar mensajes.
+    </p>
+  )}
+  {saved && (
+    <p class="mt-6 max-w-2xl rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700" role="alert">
+      Email de recepción actualizado.
+    </p>
+  )}
+
+  <form method="POST" data-enhanced class="mt-8 max-w-2xl space-y-6 rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9" novalidate>
+    <TextInput
+      label="Email de recepción"
+      name="contact_email"
+      type="email"
+      value={value}
+      error={error}
+      required
+      placeholder="info@fadeingenieria.com.ar"
+      hint="A esta casilla llegan los formularios completados por los visitantes."
+    />
+    <div class="border-t border-line pt-6">
+      <SubmitButton label="Guardar" />
+    </div>
+    <FormEnhancer />
+  </form>
+</AdminLayout>

@@ -1,0 +1,32 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  accept?: string;
+  multiple?: boolean;
+  error?: string;
+  hint?: string;
+}
+const { label, name, accept, multiple = false, error, hint } = Astro.props;
+const id = `f-${name}`;
+const errId = `${id}-error`;
+const hintId = `${id}-hint`;
+const describedBy = [error ? errId : null, hint ? hintId : null].filter(Boolean).join(" ") || undefined;
+---
+
+<div class="field" data-field>
+  <label for={id} class="field-label">{label}</label>
+  <input
+    id={id}
+    name={name}
+    type="file"
+    accept={accept}
+    multiple={multiple}
+    class="mt-1.5 block w-full cursor-pointer rounded-lg border border-line text-sm text-body transition file:mr-3 file:cursor-pointer file:border-0 file:bg-brand file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:border-brand/60"
+    aria-describedby={describedBy}
+    aria-invalid={error ? "true" : undefined}
+  />
+  {hint && <p id={hintId} class="field-hint">{hint}</p>}
+  {error && <p id={errId} class="field-error" role="alert">{error}</p>}
+  <slot />
+</div>

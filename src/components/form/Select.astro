@@ -1,0 +1,43 @@
+---
+interface Option {
+  value: string;
+  label: string;
+}
+interface Props {
+  label: string;
+  name: string;
+  options: Option[];
+  value?: string | null;
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  placeholder?: string;
+}
+const { label, name, options, value = "", error, hint, required = false, placeholder } = Astro.props;
+const id = `f-${name}`;
+const errId = `${id}-error`;
+const hintId = `${id}-hint`;
+const describedBy = [error ? errId : null, hint ? hintId : null].filter(Boolean).join(" ") || undefined;
+---
+
+<div class="field" data-field>
+  <label for={id} class="field-label">
+    {label}{required && <span class="text-red-600" aria-hidden="true"> *</span>}
+  </label>
+  <select
+    id={id}
+    name={name}
+    class="field-control"
+    required={required}
+    aria-invalid={error ? "true" : undefined}
+    aria-describedby={describedBy}
+    aria-errormessage={error ? errId : undefined}
+  >
+    {placeholder && <option value="" disabled selected={!value}>{placeholder}</option>}
+    {options.map((o) => (
+      <option value={o.value} selected={value === o.value}>{o.label}</option>
+    ))}
+  </select>
+  {hint && <p id={hintId} class="field-hint">{hint}</p>}
+  {error && <p id={errId} class="field-error" role="alert">{error}</p>}
+</div>

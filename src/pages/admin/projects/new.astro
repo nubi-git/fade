@@ -1,0 +1,46 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import ProjectForm from "../../../components/admin/ProjectForm.astro";
+import { db } from "../../../lib/db";
+import { projects } from "../../../lib/db/schema";
+import { newId } from "../../../lib/auth";
+import { slugify } from "../../../lib/slug";
+import { saveUpload } from "../../../lib/uploads";
+import { projectSchema, parseForm, type FieldErrors } from "../../../lib/validation";
+import { emptyProjectValues, projectValuesFromForm } from "../../../lib/adminForms";
+
+let values = emptyProjectValues;
+let errors: FieldErrors = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  values = projectValuesFromForm(form);
+  const parsed = parseForm(projectSchema, form);
+
+  if (!parsed.success) {
+    errors = parsed.errors;
+  } else {
+    try {
+      const cover = await saveUpload(form.get("cover"));
+      const d = parsed.data;
+      await db.insert(projects).values({
+        id: newId(),
+        slug: `${slugify(d.name)}-${Date.now().toString(36)}`,
+        ...d,
+        coverImage: cover,
+      });
+      return Astro.redirect("/admin/projects");
+    } catch (e) {
+      errors._form = e instanceof Error ? e.message : "No se pudo guardar.";
+    }
+  }
+}
+---
+
+<AdminLayout title="Nuevo proyecto">
+  <a href="/admin/projects" class="text-sm text-body transition-colors hover:text-ink">← Volver</a>
+  <h1 class="mt-2 text-3xl font-extrabold text-ink">Nuevo proyecto</h1>
+  <div class="mt-8 max-w-5xl rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9">
+    <ProjectForm values={values} errors={errors} draftKey="project-new" />
+  </div>
+</AdminLayout>

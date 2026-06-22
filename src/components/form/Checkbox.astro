@@ -1,0 +1,28 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  checked?: boolean;
+  value?: string;
+  hint?: string;
+}
+const { label, name, checked = false, value = "1", hint } = Astro.props;
+const id = `f-${name}`;
+const hintId = `${id}-hint`;
+---
+
+<div class="field">
+  <label for={id} class="flex items-center gap-2.5">
+    <input
+      id={id}
+      name={name}
+      type="checkbox"
+      value={value}
+      checked={checked}
+      class="h-4 w-4 rounded border-line text-accent transition focus:ring-2 focus:ring-brand/30"
+      aria-describedby={hint ? hintId : undefined}
+    />
+    <span class="text-sm font-medium text-ink">{label}</span>
+  </label>
+  {hint && <p id={hintId} class="field-hint">{hint}</p>}
+</div>

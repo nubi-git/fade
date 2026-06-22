@@ -1,0 +1,67 @@
+---
+// Sistema global de animaciones de entrada al hacer scroll.
+// - IntersectionObserver (eficiente, sin listeners de scroll para el reveal).
+// - Una sola activación por elemento.
+// - Stagger en contenedores [data-reveal-group].
+// - Parallax muy sutil en [data-parallax] (rAF).
+// - Respeta prefers-reduced-motion.
+---
+<script>
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (!reduced && "IntersectionObserver" in window) {
+    /* ---- Reveal ---- */
+    const revealEls = document.querySelectorAll<HTMLElement>("[data-reveal], [data-reveal-group]");
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const el = entry.target as HTMLElement;
+
+          // Stagger para hijos de un grupo
+          if (el.hasAttribute("data-reveal-group")) {
+            const step = Number(el.dataset.revealStagger ?? 90);
+            Array.from(el.children).forEach((child, i) => {
+              (child as HTMLElement).style.transitionDelay = `${i * step}ms`;
+            });
+          } else if (el.dataset.revealDelay) {
+            el.style.transitionDelay = `${el.dataset.revealDelay}ms`;
+          }
+
+          el.classList.add("is-visible");
+          io.unobserve(el); // una sola vez
+        }
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    revealEls.forEach((el) => io.observe(el));
+
+    /* ---- Parallax sutil ---- */
+    const parallaxEls = Array.from(document.querySelectorAll<HTMLElement>("[data-parallax]"));
+    if (parallaxEls.length) {
+      let ticking = false;
+      const update = () => {
+        const vh = window.innerHeight;
+        for (const el of parallaxEls) {
+          const rect = el.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top > vh) continue;
+          const speed = Number(el.dataset.parallax ?? 0.12);
+          const offset = (rect.top + rect.height / 2 - vh / 2) * -speed;
+          el.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
+        }
+        ticking = false;
+      };
+      const onScroll = () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(update);
+        }
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll, { passive: true });
+      update();
+    }
+  }
+</script>

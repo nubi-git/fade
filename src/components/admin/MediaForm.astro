@@ -1,0 +1,79 @@
+---
+import FormSection from "../form/FormSection.astro";
+import TextInput from "../form/TextInput.astro";
+import FileInput from "../form/FileInput.astro";
+import Checkbox from "../form/Checkbox.astro";
+import SubmitButton from "../form/SubmitButton.astro";
+import FormEnhancer from "../form/FormEnhancer.astro";
+import type { FieldErrors } from "../../lib/validation";
+
+export interface MediaValues {
+  title: string;
+  docDate: string | null;
+  published: boolean;
+  sortOrder: string | number;
+}
+
+interface Props {
+  values: MediaValues;
+  errors?: FieldErrors;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  isEdit?: boolean;
+  draftKey?: string;
+}
+const { values, errors = {}, fileUrl = null, fileName = null, isEdit = false, draftKey } = Astro.props;
+const formError = errors._form;
+---
+
+<form method="POST" enctype="multipart/form-data" data-enhanced data-draft={draftKey} class="space-y-8" novalidate>
+  {formError && (
+    <p class="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">{formError}</p>
+  )}
+
+  <FormSection title="Documento">
+    <TextInput label="Título" name="title" value={values.title} error={errors.title} required placeholder="Nombre de la publicación" />
+  </FormSection>
+
+  <FormSection title="Detalles" cols={2}>
+    <TextInput label="Fecha" name="docDate" type="date" value={values.docDate} error={errors.docDate} hint="Fecha de la publicación." />
+    <TextInput label="Orden" name="sortOrder" type="number" value={values.sortOrder} error={errors.sortOrder} hint="Mayor número aparece primero." />
+  </FormSection>
+
+  <FormSection title="Archivo">
+    <FileInput
+      label={isEdit ? "Reemplazar archivo (opcional)" : "Archivo (opcional, podés subirlo luego)"}
+      name="file"
+      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+      hint="PDF, Word, Excel, PowerPoint o TXT."
+    >
+      {fileUrl && (
+        <a href={fileUrl} target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-medium text-accent hover:underline">
+          Archivo actual: {fileName ?? fileUrl}
+        </a>
+      )}
+    </FileInput>
+  </FormSection>
+
+  <Checkbox label="Publicado" name="published" checked={values.published} hint="Si está desmarcado, no se muestra en la web." />
+
+  <div class="flex flex-wrap items-center gap-4 border-t border-line pt-6">
+    <SubmitButton label="Guardar documento" />
+    <a href="/admin/media" class="text-sm font-medium text-body transition-colors hover:text-ink">Cancelar</a>
+    {isEdit && (
+      <button
+        type="submit"
+        name="_action"
+        value="delete"
+        formnovalidate
+        class="ml-auto rounded-md px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+        data-confirm="Se eliminará el documento y su archivo. Esta acción no se puede deshacer."
+        data-confirm-title="Eliminar documento"
+      >
+        Eliminar documento
+      </button>
+    )}
+  </div>
+
+  <FormEnhancer />
+</form>

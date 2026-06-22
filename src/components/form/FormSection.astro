@@ -1,0 +1,17 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+  cols?: 1 | 2;
+}
+const { title, description, cols = 1 } = Astro.props;
+const grid = cols === 2 ? "sm:grid-cols-2" : "grid-cols-1";
+---
+
+<fieldset class="border-0 p-0">
+  {title && <legend class="text-base font-bold text-ink">{title}</legend>}
+  {description && <p class="mt-1 text-sm text-body">{description}</p>}
+  <div class:list={["mt-4 grid gap-x-5 gap-y-4", grid]}>
+    <slot />
+  </div>
+</fieldset>

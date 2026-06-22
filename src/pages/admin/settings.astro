@@ -1,0 +1,75 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import FileInput from "../../components/form/FileInput.astro";
+import SubmitButton from "../../components/form/SubmitButton.astro";
+import FormEnhancer from "../../components/form/FormEnhancer.astro";
+import { getSettings, setSetting } from "../../lib/settings";
+import { saveUpload, deleteUpload } from "../../lib/uploads";
+
+let error = "";
+let saved = false;
+
+const docAccept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx";
+
+if (Astro.request.method === "POST") {
+  try {
+    const form = await Astro.request.formData();
+    const current = await getSettings();
+
+    for (const key of ["brochure", "planilla"] as const) {
+      const file = form.get(key);
+      const url = await saveUpload(file);
+      if (url) {
+        await deleteUpload(current[`${key}_url`]); // borra el anterior
+        await setSetting(`${key}_url`, url);
+        await setSetting(`${key}_name`, file && typeof file !== "string" ? file.name : "");
+      }
+    }
+    saved = true;
+  } catch (e) {
+    error = e instanceof Error ? e.message : "No se pudo guardar.";
+  }
+}
+
+const s = await getSettings();
+const files = [
+  { key: "brochure", label: "Brochure institucional", desc: 'Se descarga desde la sección "Nuestro brochure" del inicio.' },
+  { key: "planilla", label: "Planilla de obras", desc: 'Se descarga desde "Conocé nuestro trabajo" y "+150 obras".' },
+] as const;
+---
+
+<AdminLayout title="Archivos">
+  <h1 class="text-3xl font-extrabold text-ink">Archivos</h1>
+  <p class="mt-2 text-body">Archivos descargables del sitio.</p>
+
+  {saved && (
+    <p class="mt-6 max-w-3xl rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700" role="alert">
+      Cambios guardados.
+    </p>
+  )}
+  {error && (
+    <p class="mt-6 max-w-3xl rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">{error}</p>
+  )}
+
+  <form method="POST" enctype="multipart/form-data" data-enhanced class="mt-8 max-w-3xl space-y-7 rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9" novalidate>
+    {files.map((f) => (
+      <FileInput
+        label={f.label}
+        name={f.key}
+        accept={docAccept}
+        hint={f.desc}
+      >
+        {s[`${f.key}_url`] && (
+          <a href={s[`${f.key}_url`]} target="_blank" rel="noopener" class="mt-2 inline-block text-sm font-medium text-accent hover:underline">
+            Archivo actual: {s[`${f.key}_name`] || s[`${f.key}_url`]}
+          </a>
+        )}
+      </FileInput>
+    ))}
+
+    <div class="border-t border-line pt-6">
+      <SubmitButton label="Guardar archivos" />
+    </div>
+    <FormEnhancer />
+  </form>
+</AdminLayout>

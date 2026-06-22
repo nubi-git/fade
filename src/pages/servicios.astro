@@ -1,0 +1,264 @@
+---
+import Layout from '../layouts/Layout.astro'
+import ContactCta from '../components/ContactCta.astro'
+import { getSettings } from '../lib/settings'
+
+const settings = await getSettings().catch(() => ({}) as Record<string, string>)
+const planillaUrl = settings.planilla_url
+
+const services = [
+  {
+    title: 'Instalaciones sanitarias',
+    img: '/images/fondos/Service%20Image.png',
+    icon: '/images/iconos/instalaciones_sanitarias.png',
+    box: 'bg-blue-600',
+    body:
+      'En FADE Ingeniería desarrollamos soluciones integrales en instalaciones sanitarias, para la alimentación de agua fría y caliente, desagües cloacales, desagües de condensado de aire acondicionado, desagües pluviales y desagües industriales.' +
+      '\n' +
+      'Diseñamos, fabricamos y ejecutamos cada sistema con control técnico, ingeniería ejecutiva y cumplimiento normativo garantizando resultados efectivos en los tiempos establecidos.\n',
+  },
+  {
+    title: 'Instalaciones de gas',
+    img: '/images/fondos/Service%20Image-1.png',
+    icon: '/images/iconos/instalaciones_gas.png',
+    box: 'bg-violet-600',
+    body:
+      'Ejecutamos instalaciones de gas natural en baja presión desde la prolongación de entrada, planta de regulación, batería de medidores hasta la alimentación de artefactos. ' +
+      '\n' +
+      'Realizamos pedidos de factibilidades con las inspecciones parciales y finales ante los entes reguladores.',
+  },
+  {
+    title: 'Instalaciones contra incendio',
+    img: '/images/fondos/Service%20Image-2.png',
+    icon: '/images/iconos/instalaciones_conta_incendio.png',
+    box: 'bg-red-600',
+    body:
+      'Brindamos ingeniería y ejecución de Instalaciones contra Incendio para hidrantes y sprinklers según normativa local y jurisdicción, aplicando normas internacionales como la National Fire Protection Association (NFPA).' +
+      '\n' +
+      'Dentro de las instalaciones contra incendio, desarrollamos extinción por agua, gases limpios y detección.',
+  },
+  {
+    title: 'Riego',
+    img: '/images/fondos/Service%20Image-3.png',
+    icon: '/images/iconos/instalaciones_de_riego.png',
+    box: 'bg-green-600',
+    body: 'Trabajamos en conjunto con el equipo de paisajismo de la obra para realizar diseño, proyectos, cálculos hidráulicos y ejecución de instalaciones de riego automático, mediante goteo y aspersión.',
+  },
+]
+
+const providers = [
+  'ABELSON-Logo.png',
+  'Abasplas.jpg',
+  'Amanco.png',
+  'De piletas.png',
+  'EMF.png',
+  'Electro Perbe.webp',
+  'Esimet.jfif',
+  'Famiq.png',
+  'Melisam.png',
+  'Tameco.png',
+  'bairestron.png',
+  'cañosider.png',
+  'eefe.png',
+  'grundfos.png',
+  'incen sanit.png',
+  'logo-irridelta-nav.png',
+  'logo-saladillo.PNG',
+  'perbe.jpeg',
+  'stel.png',
+]
+
+// Dos filas para el carousel de proveedores
+const provHalf = Math.ceil(providers.length / 2)
+const provTop = providers.slice(0, provHalf)
+const provBottom = providers.slice(provHalf)
+---
+
+<Layout title="Servicios — FADE Ingeniería">
+  <!-- Encabezado -->
+  <section class="mx-auto max-w-7xl px-6 pt-16 pb-10 lg:px-10" data-reveal-group data-reveal-stagger="110">
+    <p class="text-sm font-semibold uppercase tracking-widest text-muted">Nuestros servicios</p>
+    <h1 class="mt-2 max-w-3xl text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
+      Especialistas en instalaciones. Expertos en resultados.
+    </h1>
+  </section>
+
+  <!-- Grid de servicios -->
+  <section class="mx-auto max-w-7xl px-6 pb-20 lg:px-10">
+    <div class="grid gap-6 md:grid-cols-2" data-reveal-group>
+      {
+        services.map((s) => (
+          <article class="hover-lift overflow-hidden rounded-2xl border border-line bg-white">
+            <div class="aspect-[16/7] overflow-hidden">
+              <img src={s.img} alt={s.title} class="h-full w-full object-cover" loading="lazy" />
+            </div>
+            <div class="p-7">
+              <div class="mb-4 flex items-center gap-4">
+                <div
+                  class={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg p-2.5 ${s.box}`}
+                >
+                  <img src={s.icon} alt="" class="h-full w-full object-contain" />
+                </div>
+                <h2 class="text-xl font-bold text-ink">{s.title}</h2>
+              </div>
+              <div class="mt-3 space-y-3 text-sm leading-relaxed text-body">
+                {s.body
+                  .split('\n')
+                  .map((p) => p.trim())
+                  .filter(Boolean)
+                  .map((para) => (
+                    <p>{para}</p>
+                  ))}
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Bloque Proyectos -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-7xl px-6 py-16 lg:px-10">
+      <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line" data-reveal="fade-up">
+        <!-- Imagen banner arriba, a todo el ancho -->
+        <div class="aspect-[21/6] w-full overflow-hidden">
+          <img
+            src="/images/fondos/Project%20Image.png"
+            alt="Proyectos"
+            class="h-full w-full object-cover grayscale"
+            loading="lazy"
+          />
+        </div>
+
+        <div class="p-8 lg:p-10">
+          <!-- Icono + título en una fila -->
+          <div class="flex items-center gap-4">
+            <div
+              class="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-500 p-2.5"
+            >
+              <img
+                src="/images/iconos/proyectos_e_ingenieria.png"
+                alt=""
+                class="h-full w-full object-contain"
+              />
+            </div>
+            <h2 class="text-3xl font-extrabold text-ink">Proyectos</h2>
+          </div>
+          <p class="mt-3 text-body">
+            Con un equipo altamente profesional y especializado en el rubro llevamos a cabo:
+          </p>
+          <ul
+            class="mt-8 grid list-none gap-x-12 gap-y-5 text-sm leading-relaxed text-body sm:grid-cols-2"
+          >
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Proyectos e Ingeniería de instalaciones sanitarias</b>, para la confección de
+              planos y documentos como pliegos de especificaciones, planillas de itemizado,
+              planillas de cargas eléctricas, memorias de cálculo hidráulico/descriptivas, entre
+              otros, con el objetivo de dar resolución y satisfacer lo requerido tanto en la etapa
+              licitatoria como la ejecutiva de cada obra.
+            </li>
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Proyectos de redes de agua potable y redes de cloaca</b>, con su posterior
+              verificación y modelación con software.
+            </li>
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Proyectos y dimensionado del sistema pluvial</b>, con los parámetros de diseño
+              según zonificación y con las precipitaciones actuales. Dimensionamiento de
+              reservorios, tanques de ralentización y estaciones de bombeo.
+            </li>
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Proyectos de ingeniería y sistemas de extinción de incendio por agua y detección</b
+              >, según o bajo normas locales o internacionales como la NFPA 13-14 y 20.
+            </li>
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Proyectos de ingeniería de redes de baja y media presión de gas</b>,
+              dimensionamiento de cañerías, diseño de plantas de regulación y batería de medidores.
+            </li>
+            <li
+              class="relative pl-5 before:absolute before:left-0 before:top-1.5 before:h-2 before:w-2 before:bg-gray-500"
+            >
+              <b>Solicitudes de factibilidades</b>, ante los entes reguladores tales como Aysa,
+              Metrogas, Gas Naturgy, etc.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Conocé nuestro trabajo -->
+  <section class="relative isolate flex min-h-[312px] items-center justify-center overflow-hidden">
+    <img
+      src="/images/fondos/conoce_nuestro_trabajo.png"
+      alt=""
+      class="absolute inset-0 -z-10 h-full w-full object-cover"
+    />
+    <div
+      class="mx-4 flex flex-col items-center gap-5 rounded-2xl bg-white/85 px-6 py-6 text-center shadow-xl backdrop-blur-sm sm:mx-6 sm:flex-row sm:gap-6 sm:px-10 sm:py-7 sm:text-left"
+      data-reveal="fade-scale"
+    >
+      <h2 class="text-2xl font-extrabold text-ink sm:text-3xl">Conocé nuestro trabajo</h2>
+      {planillaUrl ? (
+        <a href={planillaUrl} target="_blank" rel="noopener" download class="btn">Descargar planilla</a>
+      ) : (
+        <span class="btn opacity-60" aria-disabled="true">Próximamente</span>
+      )}
+    </div>
+  </section>
+
+  <!-- Proveedores (carousel) -->
+  <section class="py-20">
+    <div class="mx-auto max-w-7xl px-6 lg:px-10" data-reveal="fade-up">
+      <h2 class="text-3xl font-extrabold text-ink">Nuestros proveedores</h2>
+      <p class="mt-3 max-w-2xl text-body">
+        Trabajamos con marcas y proveedores que nos garantizan calidad y compromiso.
+      </p>
+    </div>
+
+    <div class="marquee mt-12 space-y-8 overflow-hidden">
+      <!-- Fila superior: derecha → izquierda -->
+      <div class="marquee-track marquee-left">
+        {
+          [...provTop, ...provTop].map((p) => (
+            <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
+              <img
+                src={encodeURI(`/images/logos/proveedores/${p}`)}
+                alt=""
+                class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100"
+                loading="lazy"
+              />
+            </div>
+          ))
+        }
+      </div>
+      <!-- Fila inferior: izquierda → derecha -->
+      <div class="marquee-track marquee-right">
+        {
+          [...provBottom, ...provBottom].map((p) => (
+            <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
+              <img
+                src={encodeURI(`/images/logos/proveedores/${p}`)}
+                alt=""
+                class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100"
+                loading="lazy"
+              />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <ContactCta />
+</Layout>

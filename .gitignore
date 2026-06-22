@@ -1,0 +1,21 @@
+# build output
+dist/
+.output/
+
+# dependencies
+node_modules/
+
+# astro
+.astro/
+
+# environment / logs
+*.log
+.env
+.env.production
+.DS_Store
+
+# design references (local only)
+.design/
+
+# uploads (contenido subido en runtime)
+uploads/

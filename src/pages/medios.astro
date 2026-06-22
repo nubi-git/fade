@@ -1,0 +1,63 @@
+---
+import Layout from "../layouts/Layout.astro";
+import ContactCta from "../components/ContactCta.astro";
+import { db } from "../lib/db";
+import { mediaDocuments } from "../lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+
+const docs = await db
+  .select()
+  .from(mediaDocuments)
+  .where(eq(mediaDocuments.published, true))
+  .orderBy(desc(mediaDocuments.sortOrder), desc(mediaDocuments.createdAt));
+
+// Formatea YYYY-MM-DD → dd/mm/aaaa; si no es ese formato, muestra tal cual.
+function fmtDate(d: string | null): string {
+  if (!d) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : d;
+}
+---
+
+<Layout title="FADE en los medios — FADE Ingeniería">
+  <section class="mx-auto max-w-7xl px-6 py-16 lg:px-10">
+    <div class="grid items-start gap-12 lg:grid-cols-2">
+      <!-- Listado de documentos -->
+      <div data-reveal="fade-up">
+        <p class="text-sm font-semibold uppercase tracking-widest text-muted">Lo que dicen de nosotros</p>
+        <h1 class="mt-2 text-4xl font-extrabold leading-tight text-ink sm:text-5xl">
+          FADE en los medios
+        </h1>
+
+        {docs.length === 0 ? (
+          <p class="mt-10 text-body">Próximamente publicaremos novedades.</p>
+        ) : (
+          <ul class="mt-10 divide-y divide-line">
+            {docs.map((d) => (
+              <li class="flex flex-col items-start gap-3 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div class="min-w-0">
+                  <span class="block font-semibold text-ink">{d.title}</span>
+                  <span class="text-sm text-muted">{fmtDate(d.docDate)}</span>
+                </div>
+                {d.fileUrl ? (
+                  <a href={d.fileUrl} download={d.fileName ?? undefined} target="_blank" rel="noopener" class="btn w-full sm:w-auto">
+                    Descargar
+                  </a>
+                ) : (
+                  <span class="btn w-full cursor-not-allowed opacity-50 sm:w-auto" aria-disabled="true">Próximamente</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <!-- Imagen -->
+      <div class="aspect-[4/3] overflow-hidden rounded-xl lg:aspect-square" data-reveal="fade-scale" data-reveal-delay="120">
+        <img src="/images/fondos/medios_image.png" alt="FADE en los medios" class="h-full w-full object-cover" />
+      </div>
+    </div>
+  </section>
+
+  <ContactCta />
+</Layout>

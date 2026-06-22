@@ -1,0 +1,46 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import MediaForm from "../../../components/admin/MediaForm.astro";
+import { db } from "../../../lib/db";
+import { mediaDocuments } from "../../../lib/db/schema";
+import { newId } from "../../../lib/auth";
+import { saveUpload } from "../../../lib/uploads";
+import { mediaSchema, parseForm, type FieldErrors } from "../../../lib/validation";
+import { emptyMediaValues, mediaValuesFromForm } from "../../../lib/adminForms";
+
+let values = emptyMediaValues;
+let errors: FieldErrors = {};
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  values = mediaValuesFromForm(form);
+  const parsed = parseForm(mediaSchema, form);
+
+  if (!parsed.success) {
+    errors = parsed.errors;
+  } else {
+    try {
+      const file = form.get("file");
+      const fileUrl = await saveUpload(file);
+      const fileName = fileUrl && file && typeof file !== "string" ? file.name : null;
+      await db.insert(mediaDocuments).values({
+        id: newId(),
+        ...parsed.data,
+        fileUrl,
+        fileName,
+      });
+      return Astro.redirect("/admin/media");
+    } catch (e) {
+      errors._form = e instanceof Error ? e.message : "No se pudo guardar.";
+    }
+  }
+}
+---
+
+<AdminLayout title="Nuevo documento">
+  <a href="/admin/media" class="text-sm text-body transition-colors hover:text-ink">← Volver</a>
+  <h1 class="mt-2 text-3xl font-extrabold text-ink">Nuevo documento</h1>
+  <div class="mt-8 max-w-3xl rounded-2xl border border-line bg-white p-7 shadow-sm lg:p-9">
+    <MediaForm values={values} errors={errors} draftKey="media-new" />
+  </div>
+</AdminLayout>

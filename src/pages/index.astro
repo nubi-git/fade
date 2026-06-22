@@ -1,0 +1,210 @@
+---
+import Layout from '../layouts/Layout.astro'
+import ContactCta from '../components/ContactCta.astro'
+import ProjectCard from '../components/ProjectCard.astro'
+import { getSettings } from '../lib/settings'
+
+const settings = await getSettings().catch(() => ({}) as Record<string, string>)
+const brochureUrl = settings.brochure_url
+
+const services = [
+  {
+    title: 'Instalaciones sanitarias',
+    icon: '/images/iconos/instalaciones_sanitarias.png',
+    img: '/images/fondos/servicios_card_sanitarias.png',
+  },
+  {
+    title: 'Instalaciones de gas',
+    icon: '/images/iconos/instalaciones_gas.png',
+    img: '/images/fondos/servicios_card_gas.png',
+  },
+  {
+    title: 'Instalaciones contra incendio',
+    icon: '/images/iconos/instalaciones_conta_incendio.png',
+    img: '/images/fondos/servicios_card_incendio.png',
+  },
+  {
+    title: 'Riego',
+    icon: '/images/iconos/instalaciones_de_riego.png',
+    img: '/images/fondos/servicios_card_riego.png',
+  },
+  {
+    title: 'Proyectos e Ingeniería',
+    icon: '/images/iconos/proyectos_e_ingenieria.png',
+    img: '/images/fondos/servicios_card_ingenieria.png',
+  },
+]
+
+const projects = [
+  {
+    name: 'Nombre del proyecto',
+    type: 'Instalación sanitaria',
+    year: 2023,
+    img: '/images/obras/Project image.png',
+  },
+  {
+    name: 'Nombre del proyecto',
+    type: 'Instalación de gas',
+    year: 2023,
+    img: '/images/obras/Project image-1.png',
+  },
+  {
+    name: 'Nombre del proyecto',
+    type: 'Contra incendio',
+    year: 2022,
+    img: '/images/obras/Project image-2.png',
+  },
+  {
+    name: 'Nombre del proyecto',
+    type: 'Riego',
+    year: 2022,
+    img: '/images/obras/Project image-3.png',
+  },
+  {
+    name: 'Nombre del proyecto',
+    type: 'Instalación sanitaria',
+    year: 2021,
+    img: '/images/obras/Project image-4.png',
+  },
+  {
+    name: 'Nombre del proyecto',
+    type: 'Instalación integral',
+    year: 2021,
+    img: '/images/obras/Project image-5.png',
+  },
+]
+---
+
+<Layout title="FADE Ingeniería — Instalaciones">
+  <!-- Hero -->
+  <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
+    <img
+      src="/images/fondos/home_hero_image.png"
+      alt=""
+      data-parallax="0.1"
+      class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
+    />
+    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-brand-dark/85 via-ink/80 to-black/80">
+    </div>
+    <div class="mx-auto w-full max-w-7xl px-6 lg:px-10" data-reveal-group data-reveal-stagger="120">
+      <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-white/70">
+        FADE Ingeniería
+      </p>
+      <h1
+        class="max-w-6xl text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl"
+      >
+        Más de 20 años <br /> de experiencia en Instalaciones
+      </h1>
+      <p class="mt-6 max-w-xl text-lg text-white/80">
+        Instalaciones sanitarias, de gas, contra incendio y riego con calidad, seguridad y
+        compromiso profesional.
+      </p>
+      <a href="/contacto" class="btn mt-8"> Contactanos </a>
+    </div>
+  </section>
+
+  <!-- Servicios -->
+  <section class="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+    <div class="mb-10 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between" data-reveal="fade-up">
+      <h2 class="text-3xl font-extrabold text-ink">Servicios</h2>
+      <a href="/servicios" class="btn max-sm:w-full"> Conocer más </a>
+    </div>
+    <div class="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-5" data-reveal-group>
+      {
+        services.map((s) => (
+          <a
+            href="/servicios"
+            class="group relative isolate flex aspect-[3/4] flex-col items-center justify-center gap-5 overflow-hidden rounded-xl p-5 text-center transition-shadow duration-300 hover:shadow-xl"
+          >
+            <img
+              src={s.img}
+              alt=""
+              class="absolute inset-0 -z-20 h-full w-full object-cover grayscale transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div class="absolute inset-0 -z-10 bg-black/55" />
+            <img src={s.icon} alt="" class="h-16 w-16 object-contain sm:h-24 sm:w-24" />
+            <h3 class="text-base font-bold leading-tight text-white">{s.title}</h3>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Obras & Proyectos -->
+  <section class="bg-surface">
+    <div class="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+      <h2 class="text-3xl font-extrabold text-ink" data-reveal="fade-up">Obras & Proyectos</h2>
+      <p class="mt-3 max-w-2xl text-body" data-reveal="fade-in" data-reveal-delay="100">
+        Con una trayectoria de casi dos décadas, garantizamos excelencia en instalaciones
+        sanitarias, gas e incendio. Nuestra experiencia es el sello de calidad en cada proyecto.
+      </p>
+      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+        {projects.map((p) => <ProjectCard {...p} />)}
+      </div>
+      <div class="mt-10 text-center" data-reveal="fade-up">
+        <a href="/proyectos" class="btn"> Ver todos </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Brochure -->
+  <section
+    class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center justify-center overflow-hidden text-center text-white"
+  >
+    <!--
+      Background: idealmente un video institucional / multiobra (autoplay + loop).
+      Para usar video, dejá el archivo en /public/videos/brochure.mp4 y descomentá el <video>.
+    -->
+    <!--
+    <video
+      class="absolute inset-0 -z-20 h-full w-full object-cover"
+      autoplay
+      muted
+      loop
+      playsinline
+      poster="/images/fondos/brochure_section_image.png"
+    >
+      <source src="/videos/brochure.mp4" type="video/mp4" />
+    </video>
+    -->
+    <img
+      src="/images/fondos/brochure_section_image.png"
+      alt=""
+      data-parallax="0.1"
+      class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
+    />
+    <div class="absolute inset-0 -z-10 bg-black/35"></div>
+    <div class="mx-auto flex max-w-3xl flex-col items-center gap-5 px-6 py-24" data-reveal-group data-reveal-stagger="120">
+      <h2 class="text-4xl font-extrabold text-white drop-shadow-lg sm:text-6xl">
+        Nuestro brochure
+      </h2>
+      <p class="text-lg text-white/90 drop-shadow">Conocé más sobre nosotros</p>
+      {brochureUrl ? (
+        <a href={brochureUrl} target="_blank" rel="noopener" download class="btn mt-4 shadow-lg">Descargar</a>
+      ) : (
+        <span class="btn mt-4 shadow-lg opacity-60" aria-disabled="true">Próximamente</span>
+      )}
+    </div>
+  </section>
+
+  <!-- FADE en los medios -->
+  <section class="mx-auto max-w-7xl px-6 py-20 lg:px-10">
+    <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between" data-reveal="fade-up">
+      <div>
+        <p class="text-sm font-semibold text-ink">Lo que dicen de nosotros</p>
+        <h2 class="mt-1 text-3xl font-extrabold text-ink sm:text-4xl">FADE en los medios</h2>
+      </div>
+      <a href="/medios" class="btn shrink-0 max-sm:w-full"> Conocer más </a>
+    </div>
+    <div class="mt-8 overflow-hidden rounded-xl" data-reveal="fade-scale" data-reveal-delay="100">
+      <img
+        src="/images/fondos/testimonials_image.png"
+        alt="FADE en los medios"
+        class="h-[320px] w-full object-cover grayscale"
+      />
+    </div>
+  </section>
+
+  <ContactCta />
+</Layout>

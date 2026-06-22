@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+/* ---- FADE design tokens (extraídos del diseño Figma) ---- */
+@theme {
+  --color-brand: #3a389b;          /* índigo principal FADE */
+  --color-brand-dark: #2c2a78;     /* índigo oscuro / hover */
+  --color-brand-light: #4b4aa3;    /* índigo footer */
+  --color-accent: #3b378c;         /* botones / CTA */
+  --color-accent-hover: #2f2c70;
+  --color-ink: #111322;            /* texto titulares */
+  --color-body: #4b5063;           /* texto párrafo */
+  --color-muted: #8a8fa3;          /* texto secundario */
+  --color-surface: #f3f4f8;        /* secciones gris claro */
+  --color-line: #e3e5ee;           /* bordes */
+  --color-footer-bar: #3a3a3a;     /* barra inferior footer */
+
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--color-ink);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Cursor pointer en todo lo clickeable */
+  a[href],
+  button,
+  label[for],
+  summary,
+  select,
+  [role="button"],
+  [data-confirm],
+  [data-dot],
+  [data-slide] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"],
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
+@layer components {
+  /* Botón estándar: 250px de ancho, color de marca #3B378C */
+  .btn {
+    display: inline-flex;
+    width: 250px;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--color-accent);
+    transition: background-color 0.2s ease;
+  }
+  .btn:hover {
+    background-color: var(--color-accent-hover);
+  }
+}
+
+/* ---- Formularios (admin) ---- */
+@layer components {
+  .field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .field-control {
+    margin-top: 0.375rem;
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-line);
+    background: #fff;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .field-control::placeholder { color: var(--color-muted); }
+  .field-control:hover { border-color: #c7cbd9; }
+  .field-control:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent);
+  }
+  .field-control:disabled { background: var(--color-surface); cursor: not-allowed; opacity: 0.7; }
+  .field-control[aria-invalid="true"] {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #dc2626 14%, transparent);
+  }
+  .field-hint { margin-top: 0.375rem; font-size: 0.75rem; color: var(--color-muted); }
+  .field-error {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #dc2626;
+    animation: field-error-in 0.18s ease-out;
+  }
+}
+
+@keyframes field-error-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Spinner de carga en botones */
+@keyframes spin { to { transform: rotate(360deg); } }
+@layer components {
+  .btn-spinner {
+    display: inline-block;
+    height: 1rem;
+    width: 1rem;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 9999px;
+    animation: spin 0.6s linear infinite;
+  }
+}
+
+/* ---- Scroll reveal (animaciones de entrada) ----
+   El estado oculto solo aplica con JS activo (html.js) y sin reduced-motion,
+   así sin JS o con preferencia de menos movimiento el contenido se ve siempre. */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  /* Variantes por tipo de contenido */
+  .js [data-reveal="fade-in"] { transform: translateY(0); }
+  .js [data-reveal="fade-scale"] { transform: scale(0.95); }
+  .js [data-reveal="fade-up"] { transform: translateY(28px); }
+
+  .js [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Stagger: el contenedor revela sus hijos en cascada */
+  .js [data-reveal-group] > * {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .js [data-reveal-group].is-visible > * {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Transición de paginación */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes page-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: none; }
+  }
+  .page-in { animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+}
+
+/* Parallax sutil (lo controla JS con transform) */
+[data-parallax] { will-change: transform; }
+
+/* ---- Microinteracciones ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .hover-lift { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease; }
+  .hover-lift:hover { transform: translateY(-4px); }
+}
+
+/* ---- Carousel / marquee de logos ---- */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  flex-shrink: 0;
+}
+.marquee-left {
+  animation: marquee-left 45s linear infinite;
+}
+.marquee-right {
+  animation: marquee-right 45s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}

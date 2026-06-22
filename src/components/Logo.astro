@@ -1,0 +1,16 @@
+---
+interface Props {
+  variant?: "dark" | "light";
+  class?: string;
+  imgClass?: string;
+}
+const { variant = "dark", class: className = "", imgClass = "h-11" } = Astro.props;
+const src =
+  variant === "light"
+    ? "/images/logos/fade/logo_fade_blanco.png"
+    : "/images/logos/fade/logo_fade.png";
+---
+
+<a href="/" class={`inline-flex items-center ${className}`} aria-label="FADE Ingeniería - inicio">
+  <img src={src} alt="FADE Ingeniería" class={`w-auto ${imgClass}`} />
+</a>

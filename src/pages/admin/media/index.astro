@@ -1,0 +1,81 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import { db } from "../../../lib/db";
+import { mediaDocuments } from "../../../lib/db/schema";
+import { desc } from "drizzle-orm";
+
+const rows = await db
+  .select()
+  .from(mediaDocuments)
+  .orderBy(desc(mediaDocuments.sortOrder), desc(mediaDocuments.createdAt));
+---
+
+<AdminLayout title="Medios">
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-extrabold text-ink">FADE en los medios</h1>
+    <a href="/admin/media/new" class="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover">
+      + Nuevo documento
+    </a>
+  </div>
+
+  {rows.length === 0 ? (
+    <p class="mt-10 rounded-xl border border-dashed border-line bg-white p-10 text-center text-muted">
+      Todavía no hay documentos. Subí el primero.
+    </p>
+  ) : (
+    <>
+      <div class="mt-8">
+        <input
+          type="search"
+          id="table-search"
+          placeholder="Buscar documentos…"
+          class="w-full max-w-sm rounded-md border border-line px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand"
+        />
+      </div>
+    <div class="mt-4 overflow-hidden rounded-xl border border-line bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-line bg-surface text-muted">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Título</th>
+            <th class="px-4 py-3 font-semibold">Fecha</th>
+            <th class="px-4 py-3 font-semibold">Archivo</th>
+            <th class="px-4 py-3 font-semibold">Estado</th>
+            <th class="px-4 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((d) => (
+            <tr class="border-b border-line last:border-0">
+              <td class="px-4 py-3 font-medium text-ink">{d.title}</td>
+              <td class="px-4 py-3 text-body">{d.docDate ?? "—"}</td>
+              <td class="px-4 py-3">
+                <a href={d.fileUrl} target="_blank" class="text-accent hover:underline">{d.fileName ?? "ver"}</a>
+              </td>
+              <td class="px-4 py-3">
+                {d.published ? (
+                  <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Publicado</span>
+                ) : (
+                  <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">Borrador</span>
+                )}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <a href={`/admin/media/${d.id}`} class="font-medium text-accent hover:underline">Editar</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    </>
+  )}
+
+  <script>
+    const input = document.getElementById("table-search") as HTMLInputElement | null;
+    input?.addEventListener("input", () => {
+      const q = input.value.trim().toLowerCase();
+      document.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((row) => {
+        row.style.display = row.textContent?.toLowerCase().includes(q) ? "" : "none";
+      });
+    });
+  </script>
+</AdminLayout>

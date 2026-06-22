@@ -1,0 +1,100 @@
+---
+// Modal de confirmación global para acciones destructivas.
+// Cualquier botón con [data-confirm] (mensaje) lo dispara; al confirmar,
+// envía el formulario preservando el submitter (name/value).
+---
+<div
+  id="confirm-dialog"
+  class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="confirm-title"
+  aria-describedby="confirm-desc"
+>
+  <div
+    id="confirm-card"
+    class="w-full max-w-sm scale-95 rounded-2xl bg-white p-6 opacity-0 shadow-xl transition-all duration-150"
+  >
+    <div class="flex items-start gap-4">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 9v4M12 17h.01M10.3 3.9l-8 13.8A2 2 0 004 21h16a2 2 0 001.7-3.3l-8-13.8a2 2 0 00-3.4 0z" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <h2 id="confirm-title" class="text-base font-bold text-ink">Confirmar acción</h2>
+        <p id="confirm-desc" class="mt-1 text-sm text-body">¿Seguro que querés continuar?</p>
+      </div>
+    </div>
+
+    <div class="mt-6 flex justify-end gap-3">
+      <button type="button" data-confirm-cancel class="rounded-md px-4 py-2 text-sm font-medium text-body transition-colors hover:bg-surface">
+        Cancelar
+      </button>
+      <button type="button" data-confirm-ok class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const dialog = document.getElementById("confirm-dialog");
+  const card = document.getElementById("confirm-card");
+  const titleEl = document.getElementById("confirm-title")!;
+  const descEl = document.getElementById("confirm-desc")!;
+  const okBtn = document.querySelector<HTMLButtonElement>("[data-confirm-ok]")!;
+  const cancelBtn = document.querySelector<HTMLButtonElement>("[data-confirm-cancel]")!;
+
+  let pending: HTMLButtonElement | null = null;
+  let lastFocus: HTMLElement | null = null;
+
+  function open(trigger: HTMLButtonElement) {
+    pending = trigger;
+    lastFocus = trigger;
+    titleEl.textContent = trigger.dataset.confirmTitle || "Confirmar eliminación";
+    descEl.textContent = trigger.dataset.confirm || "Esta acción no se puede deshacer.";
+    okBtn.textContent = trigger.dataset.confirmOk || "Eliminar";
+    dialog?.classList.remove("hidden");
+    dialog?.classList.add("flex");
+    requestAnimationFrame(() => {
+      card?.classList.remove("scale-95", "opacity-0");
+      card?.classList.add("scale-100", "opacity-100");
+    });
+    okBtn.focus();
+  }
+
+  function close() {
+    card?.classList.add("scale-95", "opacity-0");
+    card?.classList.remove("scale-100", "opacity-100");
+    dialog?.classList.add("hidden");
+    dialog?.classList.remove("flex");
+    pending = null;
+    lastFocus?.focus();
+  }
+
+  // Interceptar todos los botones con [data-confirm]
+  document.querySelectorAll<HTMLButtonElement>("[data-confirm]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      open(btn);
+    });
+  });
+
+  okBtn.addEventListener("click", () => {
+    if (!pending) return;
+    const form = pending.form;
+    const trigger = pending;
+    close();
+    if (form) {
+      if (trigger.name) form.requestSubmit(trigger);
+      else form.requestSubmit();
+    }
+  });
+
+  cancelBtn.addEventListener("click", close);
+  dialog?.addEventListener("click", (e) => { if (e.target === dialog) close(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && dialog && !dialog.classList.contains("hidden")) close();
+  });
+</script>

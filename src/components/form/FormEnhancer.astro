@@ -1,0 +1,109 @@
+---
+// Mejora progresiva para formularios marcados con [data-enhanced].
+// No requiere JS para funcionar (el servidor valida igual con Zod).
+---
+<script>
+  type Ctrl = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+  function msgFor(c: Ctrl): string {
+    const v = c.validity;
+    if (v.valueMissing) return "Este campo es obligatorio.";
+    if (v.typeMismatch && c.type === "email") return "Ingresá un email válido.";
+    if (v.typeMismatch && c.type === "url") return "Ingresá una URL válida.";
+    if (v.rangeUnderflow || v.rangeOverflow) return "Valor fuera de rango.";
+    if (v.tooShort) return "Texto demasiado corto.";
+    return c.validationMessage || "Revisá este campo.";
+  }
+
+  function fieldOf(c: Ctrl) {
+    return c.closest<HTMLElement>("[data-field]");
+  }
+
+  function showError(c: Ctrl, message: string) {
+    const field = fieldOf(c);
+    if (!field) return;
+    c.setAttribute("aria-invalid", "true");
+    let el = field.querySelector<HTMLElement>("[data-js-error]");
+    if (!el) {
+      el = document.createElement("p");
+      el.className = "field-error";
+      el.setAttribute("role", "alert");
+      el.setAttribute("data-js-error", "");
+      field.appendChild(el);
+    }
+    el.textContent = message;
+  }
+
+  function clearError(c: Ctrl) {
+    const field = fieldOf(c);
+    if (!field) return;
+    // No tocar errores del servidor (no marcados como js-error)
+    const serverErr = field.querySelector(".field-error:not([data-js-error])");
+    if (!serverErr) c.removeAttribute("aria-invalid");
+    field.querySelector("[data-js-error]")?.remove();
+  }
+
+  function validate(c: Ctrl) {
+    if (c.checkValidity()) clearError(c);
+    else showError(c, msgFor(c));
+  }
+
+  document.querySelectorAll<HTMLFormElement>("form[data-enhanced]").forEach((form) => {
+    const controls = Array.from(
+      form.querySelectorAll<Ctrl>("input, textarea, select")
+    ).filter((c) => c.type !== "file" && c.type !== "hidden" && c.type !== "submit");
+
+    // Validación al salir del campo y al corregir
+    controls.forEach((c) => {
+      c.addEventListener("blur", () => validate(c));
+      c.addEventListener("input", () => {
+        if (c.getAttribute("aria-invalid") === "true") validate(c);
+      });
+    });
+
+    // Borrador (solo si el form lo pide)
+    const draftKey = form.dataset.draft;
+    if (draftKey) {
+      const KEY = `draft:${draftKey}`;
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+        if (saved) {
+          for (const c of controls) {
+            if (c instanceof HTMLInputElement && c.type === "checkbox") {
+              if (typeof saved[c.name] === "boolean" && !c.checked) c.checked = saved[c.name];
+            } else if (c.name in saved && !c.value) {
+              c.value = saved[c.name];
+            }
+          }
+        }
+      } catch {}
+      const save = () => {
+        const data: Record<string, unknown> = {};
+        for (const c of controls) {
+          data[c.name] =
+            c instanceof HTMLInputElement && c.type === "checkbox" ? c.checked : c.value;
+        }
+        try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+      };
+      form.addEventListener("input", save);
+      form.addEventListener("submit", () => { try { localStorage.removeItem(KEY); } catch {} });
+    }
+
+    // Estado de carga + anti doble envío
+    form.addEventListener("submit", (e) => {
+      // Acciones secundarias (eliminar, etc.) no bloquean
+      const submitter = (e as SubmitEvent).submitter as HTMLButtonElement | null;
+      if (submitter?.hasAttribute("formnovalidate")) return;
+      if (!form.checkValidity()) return; // el navegador muestra el error nativo
+
+      const btn = form.querySelector<HTMLButtonElement>("[data-submit]");
+      if (btn && !btn.disabled) {
+        btn.disabled = true;
+        btn.setAttribute("aria-busy", "true");
+        btn.querySelector("[data-spinner]")?.classList.remove("hidden");
+        const label = btn.querySelector("[data-label]");
+        if (label && btn.dataset.loadingLabel) label.textContent = btn.dataset.loadingLabel;
+      }
+    });
+  });
+</script>
