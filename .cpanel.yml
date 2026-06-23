@@ -1,0 +1,12 @@
+---
+deployment:
+  tasks:
+    # Activa el entorno Node de cPanel, instala dependencias (incluye devDeps,
+    # necesarias para compilar con Tailwind/Drizzle), construye y reinicia la app.
+    - >-
+      source /home/fade/nodevenv/fadeing/24/bin/activate &&
+      cd /home/fade/fadeing &&
+      npm ci --include=dev &&
+      npm run build &&
+      mkdir -p tmp &&
+      touch tmp/restart.txt
