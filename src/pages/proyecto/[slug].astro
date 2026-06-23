@@ -49,8 +49,8 @@ const ficha = [
 ---
 
 <Layout title={`${project.name} — FADE Ingeniería`}>
-  <section class="mx-auto max-w-7xl px-6 py-16 lg:px-10">
-    <div class="grid gap-12 lg:grid-cols-2">
+  <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16 lg:px-10">
+    <div class="grid gap-8 lg:grid-cols-2 lg:gap-12">
       <!-- Carrusel -->
       <div data-reveal="fade-scale">
         {media.length > 0 ? (
@@ -70,7 +70,7 @@ const ficha = [
             </div>
 
             {media.length > 1 && (
-              <div class="mt-5 flex items-center justify-center gap-3">
+              <div class="mt-5 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <button data-prev aria-label="Anterior" class="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-surface">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>

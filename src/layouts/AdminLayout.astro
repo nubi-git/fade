@@ -13,6 +13,7 @@ const nav = [
   { label: "Proyectos", href: "/admin/projects", icon: "folder" },
   { label: "Medios", href: "/admin/media", icon: "doc" },
   { label: "Archivos", href: "/admin/settings", icon: "cog" },
+  { label: "Logos", href: "/admin/logos", icon: "image" },
   { label: "Contacto", href: "/admin/contacto", icon: "mail" },
 ];
 
@@ -25,6 +26,7 @@ const icons: Record<string, string> = {
   doc: '<path d="M7 3h7l5 5v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 3v5h5" stroke-linecap="round" stroke-linejoin="round"/>',
   cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6" stroke-linecap="round" stroke-linejoin="round"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M21 15l-5-5L5 21" stroke-linecap="round" stroke-linejoin="round"/>',
 };
 ---
 
@@ -37,7 +39,13 @@ const icons: Record<string, string> = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} — FADE Admin</title>
   </head>
-  <body class="min-h-screen bg-surface text-ink">
+  <body class="relative min-h-screen text-ink">
+    <!-- Fondo del admin: imagen + velo para legibilidad -->
+    <div
+      class="pointer-events-none fixed inset-0 -z-20 bg-[url('/images/fondos/home_hero_image.png')] bg-cover bg-center"
+    ></div>
+    <div class="pointer-events-none fixed inset-0 -z-10 bg-surface/80"></div>
+
     {user && (
       <header class="border-b border-line bg-white">
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">

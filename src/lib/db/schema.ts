@@ -53,6 +53,15 @@ export const projectImages = mysqlTable("project_images", {
   sortOrder: int("sort_order").notNull().default(0),
 });
 
+export const logos = mysqlTable("logos", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  kind: mysqlEnum("kind", ["cliente", "proveedor"]).notNull(),
+  name: varchar("name", { length: 200 }),
+  imageUrl: varchar("image_url", { length: 400 }).notNull(),
+  sortOrder: int("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const mediaDocuments = mysqlTable("media_documents", {
   id: varchar("id", { length: 36 }).primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
@@ -73,4 +82,5 @@ export type User = typeof users.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type ProjectImage = typeof projectImages.$inferSelect;
+export type Logo = typeof logos.$inferSelect;
 export type MediaDocument = typeof mediaDocuments.$inferSelect;

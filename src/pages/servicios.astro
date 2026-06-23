@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import { getSettings } from '../lib/settings'
+import { db } from '../lib/db'
+import { logos } from '../lib/db/schema'
+import { eq, asc } from 'drizzle-orm'
 
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const planillaUrl = settings.planilla_url
@@ -46,27 +49,13 @@ const services = [
   },
 ]
 
-const providers = [
-  'ABELSON-Logo.png',
-  'Abasplas.jpg',
-  'Amanco.png',
-  'De piletas.png',
-  'EMF.png',
-  'Electro Perbe.webp',
-  'Esimet.jfif',
-  'Famiq.png',
-  'Melisam.png',
-  'Tameco.png',
-  'bairestron.png',
-  'cañosider.png',
-  'eefe.png',
-  'grundfos.png',
-  'incen sanit.png',
-  'logo-irridelta-nav.png',
-  'logo-saladillo.PNG',
-  'perbe.jpeg',
-  'stel.png',
-]
+const provRows = await db
+  .select()
+  .from(logos)
+  .where(eq(logos.kind, 'proveedor'))
+  .orderBy(asc(logos.sortOrder), asc(logos.createdAt))
+  .catch(() => [])
+const providers = provRows.map((l) => l.imageUrl)
 
 // Dos filas para el carousel de proveedores
 const provHalf = Math.ceil(providers.length / 2)
@@ -233,7 +222,7 @@ const provBottom = providers.slice(provHalf)
           [...provTop, ...provTop].map((p) => (
             <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
               <img
-                src={encodeURI(`/images/logos/proveedores/${p}`)}
+                src={encodeURI(p)}
                 alt=""
                 class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100"
                 loading="lazy"
@@ -248,7 +237,7 @@ const provBottom = providers.slice(provHalf)
           [...provBottom, ...provBottom].map((p) => (
             <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
               <img
-                src={encodeURI(`/images/logos/proveedores/${p}`)}
+                src={encodeURI(p)}
                 alt=""
                 class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100"
                 loading="lazy"

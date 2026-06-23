@@ -1,31 +1,17 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ContactCta from "../components/ContactCta.astro";
+import { db } from "../lib/db";
+import { logos } from "../lib/db/schema";
+import { eq, asc } from "drizzle-orm";
 
-export const prerender = true;
-
-const clients = [
-  "AYRES DESARROLLOS.PNG",
-  "B&O INGENIERIA.png",
-  "Bello Podesta.png",
-  "CERVECERIA Y MALTERIA QUILMES S.A.I.C.A y G..png",
-  "COMA SA.png",
-  "COMS.jfif",
-  "Estudio jv.PNG",
-  "Griscan.PNG",
-  "HORMIGAZ.png",
-  "ING. HUGO PINUS & ASOC.jpg",
-  "LAGLEYZE MANAGMENT.avif",
-  "OBRAS & SISTEMAS.avif",
-  "Parysow.png",
-  "SACOA.png",
-  "ZANARA.avif",
-  "altuna-bullrich-cecchi-logo.gif",
-  "logo-janos.png",
-  "logo_gsa.png",
-  "meta desarrollos(javier pottap).jpg",
-  "suizo.jfif",
-];
+const rows = await db
+  .select()
+  .from(logos)
+  .where(eq(logos.kind, "cliente"))
+  .orderBy(asc(logos.sortOrder), asc(logos.createdAt))
+  .catch(() => []);
+const clients = rows.map((l) => l.imageUrl);
 
 // Dos filas para el carousel (mitad arriba, mitad abajo)
 const half = Math.ceil(clients.length / 2);
@@ -42,8 +28,11 @@ const rowBottom = clients.slice(half);
       <h1 class="max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
         Desde el proyecto hasta la ejecución, con excelencia
       </h1>
-      <p class="mt-6 max-w-xl text-lg text-white/80">
-        Acompañamos cada etapa de la obra con un equipo técnico especializado.
+      <p class="mt-6 max-w-2xl text-lg text-white/80">
+        Nuestra empresa se construye a partir del compromiso, la evolución constante y una mirada
+        integral del trabajo. A lo largo del tiempo, hemos consolidado una identidad basada en el
+        profesionalismo, la solidez técnica y la capacidad de adaptarnos a las demandas de cada
+        contexto.
       </p>
     </div>
   </section>
@@ -105,7 +94,7 @@ const rowBottom = clients.slice(half);
       <div class="marquee-track marquee-left">
         {[...rowTop, ...rowTop].map((c) => (
           <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
-            <img src={encodeURI(`/images/logos/clientes/${c}`)} alt="" class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100" loading="lazy" />
+            <img src={encodeURI(c)} alt="" class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100" loading="lazy" />
           </div>
         ))}
       </div>
@@ -113,7 +102,7 @@ const rowBottom = clients.slice(half);
       <div class="marquee-track marquee-right">
         {[...rowBottom, ...rowBottom].map((c) => (
           <div class="mx-10 flex h-28 w-56 shrink-0 items-center justify-center">
-            <img src={encodeURI(`/images/logos/clientes/${c}`)} alt="" class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100" loading="lazy" />
+            <img src={encodeURI(c)} alt="" class="max-h-24 max-w-full object-contain grayscale opacity-70 transition hover:opacity-100" loading="lazy" />
           </div>
         ))}
       </div>

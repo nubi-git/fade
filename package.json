@@ -11,7 +11,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed:admin": "node --env-file=.env scripts/seed-admin.mjs",
-    "seed:projects": "node --env-file=.env scripts/seed-projects.mjs"
+    "seed:projects": "node --env-file=.env scripts/seed-projects.mjs",
+    "seed:logos": "node --env-file=.env scripts/seed-logos.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^9.5.5",
