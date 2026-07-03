@@ -1,6 +1,5 @@
 import nodemailer from "nodemailer";
-
-const env = import.meta.env;
+import { env } from "./env";
 
 export function isMailConfigured(): boolean {
   return Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);

@@ -5,6 +5,7 @@ import { getSettings } from "../lib/settings";
 import { isMailConfigured, sendContactEmail } from "../lib/mailer";
 import { TURNSTILE_SITE_KEY, isTurnstileConfigured, verifyTurnstile } from "../lib/turnstile";
 import { getClientIp, rateLimit } from "../lib/security";
+import { env } from "../lib/env";
 
 const turnstileOn = isTurnstileConfigured();
 
@@ -38,7 +39,7 @@ if (Astro.request.method === "POST") {
     } else {
       try {
         const settings = await getSettings().catch(() => ({}) as Record<string, string>);
-        const to = settings.contact_email || import.meta.env.SMTP_FROM || import.meta.env.SMTP_USER;
+        const to = settings.contact_email || env.SMTP_FROM || env.SMTP_USER;
         if (!isMailConfigured() || !to) {
           errors._form = "El envío de correo no está configurado. Escribinos directamente por email.";
         } else {

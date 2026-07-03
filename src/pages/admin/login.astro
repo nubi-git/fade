@@ -5,6 +5,7 @@ import { db } from "../../lib/db";
 import { users } from "../../lib/db/schema";
 import { SESSION_COOKIE, createSession, verifyPassword } from "../../lib/auth";
 import { getClientIp, rateLimit } from "../../lib/security";
+import { env } from "../../lib/env";
 import TextInput from "../../components/form/TextInput.astro";
 import SubmitButton from "../../components/form/SubmitButton.astro";
 import FormEnhancer from "../../components/form/FormEnhancer.astro";
@@ -32,7 +33,7 @@ if (Astro.request.method === "POST") {
       Astro.cookies.set(SESSION_COOKIE, session.id, {
         httpOnly: true,
         sameSite: "lax",
-        secure: import.meta.env.SECURE_COOKIES === "true",
+        secure: env.SECURE_COOKIES === "true",
         path: "/",
         expires: session.expiresAt,
       });

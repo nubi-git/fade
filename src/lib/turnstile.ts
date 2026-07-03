@@ -1,4 +1,4 @@
-const env = import.meta.env;
+import { env } from "./env";
 
 export const TURNSTILE_SITE_KEY = env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
