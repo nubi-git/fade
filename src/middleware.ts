@@ -38,7 +38,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
       const expectedHost =
         context.request.headers.get("x-forwarded-host") ?? context.url.host;
       if (originHost !== expectedHost) {
-        return new Response("Origen no permitido", { status: 403 });
+        // DEBUG temporal: muestra los valores para diagnosticar el proxy.
+        return new Response(
+          `Origen no permitido | origin=${originHost} | expected=${expectedHost} | x-forwarded-host=${context.request.headers.get(
+            "x-forwarded-host",
+          )} | url.host=${context.url.host} | host-header=${context.request.headers.get(
+            "host",
+          )}`,
+          { status: 403 },
+        );
       }
     }
   }
