@@ -32,26 +32,24 @@ jobs:
       - name: Compilar (build)
         run: npm run build
 
-      # Carga la clave privada de deploy (guardada en Secrets) en el agente SSH.
-      - name: Configurar clave SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Registrar host conocido
+      # La clave privada se guarda en el Secret codificada en base64 (una sola
+      # línea, así no se corrompe al copiar). Acá la decodificamos a un archivo.
+      - name: Preparar clave SSH
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
       # Sube el build compilado. --delete limpia archivos viejos del dist.
       # OJO: solo sincroniza dist/ y los package*.json; NO toca uploads/ ni .env.
       - name: Subir build al servidor
         run: |
           rsync -az --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
             dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/dist/"
           rsync -az \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
             package.json package-lock.json \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
 
@@ -59,5 +57,5 @@ jobs:
       # reinicia la app de Passenger tocando tmp/restart.txt.
       - name: Instalar deps de producción y reiniciar
         run: |
-          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+          ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "source /home/fade/nodevenv/fadeing/24/bin/activate && cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev && mkdir -p tmp && touch tmp/restart.txt"
