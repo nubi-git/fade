@@ -1,6 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ContactCta from "../components/ContactCta.astro";
+import { Image } from "astro:assets";
+import mediosImg from "../assets/fondos/medios_image.png";
 import { db } from "../lib/db";
 import { mediaDocuments } from "../lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -54,7 +56,7 @@ function fmtDate(d: string | null): string {
 
       <!-- Imagen -->
       <div class="aspect-[4/3] overflow-hidden rounded-xl lg:aspect-square" data-reveal="fade-scale" data-reveal-delay="120">
-        <img src="/images/fondos/medios_image.png" alt="FADE en los medios" class="h-full w-full object-cover" />
+        <Image src={mediosImg} alt="FADE en los medios" widths={[480, 800]} sizes="(min-width: 1024px) 40vw, 100vw" format="webp" loading="lazy" class="h-full w-full object-cover" />
       </div>
     </div>
   </section>

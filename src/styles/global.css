@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Inter self-hosted (variable, un solo woff2 por subset). Reemplaza Google Fonts. */
+@import "@fontsource-variable/inter";
 
 /* ---- FADE design tokens (extraídos del diseño Figma) ---- */
 @theme {
@@ -14,7 +16,7 @@
   --color-line: #e3e5ee;           /* bordes */
   --color-footer-bar: #3a3a3a;     /* barra inferior footer */
 
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 @layer base {

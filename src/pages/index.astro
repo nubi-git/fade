@@ -2,6 +2,15 @@
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import ProjectCard from '../components/ProjectCard.astro'
+import { Image, getImage } from 'astro:assets'
+import heroImg from '../assets/fondos/home_hero_image.png'
+import brochureImg from '../assets/fondos/brochure_section_image.png'
+import testimonialsImg from '../assets/fondos/testimonials_image.png'
+import cardSanitarias from '../assets/fondos/servicios_card_sanitarias.png'
+import cardGas from '../assets/fondos/servicios_card_gas.png'
+import cardIncendio from '../assets/fondos/servicios_card_incendio.png'
+import cardRiego from '../assets/fondos/servicios_card_riego.png'
+import cardIngenieria from '../assets/fondos/servicios_card_ingenieria.png'
 import { getSettings } from '../lib/settings'
 import { db } from '../lib/db'
 import { projects as projectsTable } from '../lib/db/schema'
@@ -10,31 +19,35 @@ import { desc, eq } from 'drizzle-orm'
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const brochureUrl = settings.brochure_url
 
+// Hero = candidata a LCP: la precargamos en WebP a un ancho fijo.
+const heroWidth = 1600
+const heroPreload = await getImage({ src: heroImg, width: heroWidth, format: 'webp' })
+
 const services = [
   {
     title: 'Instalaciones sanitarias',
     icon: '/images/iconos/instalaciones_sanitarias.png',
-    img: '/images/fondos/servicios_card_sanitarias.png',
+    img: cardSanitarias,
   },
   {
     title: 'Instalaciones de gas',
     icon: '/images/iconos/instalaciones_gas.png',
-    img: '/images/fondos/servicios_card_gas.png',
+    img: cardGas,
   },
   {
     title: 'Instalaciones contra incendio',
     icon: '/images/iconos/instalaciones_conta_incendio.png',
-    img: '/images/fondos/servicios_card_incendio.png',
+    img: cardIncendio,
   },
   {
     title: 'Riego',
     icon: '/images/iconos/instalaciones_de_riego.png',
-    img: '/images/fondos/servicios_card_riego.png',
+    img: cardRiego,
   },
   {
     title: 'Proyectos e Ingeniería',
     icon: '/images/iconos/proyectos_e_ingenieria.png',
-    img: '/images/fondos/servicios_card_ingenieria.png',
+    img: cardIngenieria,
   },
 ]
 
@@ -57,11 +70,17 @@ const projects = dbProjects.map((p) => ({
 ---
 
 <Layout title="FADE Ingeniería — Instalaciones">
+  <link slot="head" rel="preload" as="image" href={heroPreload.src} fetchpriority="high" />
+
   <!-- Hero -->
   <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
-    <img
-      src="/images/fondos/home_hero_image.png"
+    <Image
+      src={heroImg}
       alt=""
+      width={heroWidth}
+      format="webp"
+      loading="eager"
+      fetchpriority="high"
       data-parallax="0.1"
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
@@ -97,14 +116,17 @@ const projects = dbProjects.map((p) => ({
             href="/servicios"
             class="group relative isolate flex aspect-[3/4] flex-col items-center justify-center gap-5 overflow-hidden rounded-xl p-5 text-center transition-shadow duration-300 hover:shadow-xl"
           >
-            <img
+            <Image
               src={s.img}
               alt=""
+              widths={[240, 480]}
+              sizes="(min-width: 1024px) 20vw, 50vw"
+              format="webp"
               class="absolute inset-0 -z-20 h-full w-full object-cover grayscale transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
             <div class="absolute inset-0 -z-10 bg-black/55" />
-            <img src={s.icon} alt="" class="h-16 w-16 object-contain sm:h-24 sm:w-24" />
+            <img src={s.icon} alt="" width="96" height="96" class="h-16 w-16 object-contain sm:h-24 sm:w-24" />
             <h3 class="text-base font-bold leading-tight text-white">{s.title}</h3>
           </a>
         ))
@@ -149,9 +171,13 @@ const projects = dbProjects.map((p) => ({
       <source src="/videos/brochure.mp4" type="video/mp4" />
     </video>
     -->
-    <img
-      src="/images/fondos/brochure_section_image.png"
+    <Image
+      src={brochureImg}
       alt=""
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      format="webp"
+      loading="lazy"
       data-parallax="0.1"
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
@@ -179,9 +205,13 @@ const projects = dbProjects.map((p) => ({
       <a href="/medios" class="btn shrink-0 max-sm:w-full"> Conocer más </a>
     </div>
     <div class="mt-8 overflow-hidden rounded-xl" data-reveal="fade-scale" data-reveal-delay="100">
-      <img
-        src="/images/fondos/testimonials_image.png"
+      <Image
+        src={testimonialsImg}
         alt="FADE en los medios"
+        widths={[768, 1280, 1600]}
+        sizes="100vw"
+        format="webp"
+        loading="lazy"
         class="h-[320px] w-full object-cover grayscale"
       />
     </div>

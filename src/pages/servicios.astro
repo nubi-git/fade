@@ -1,6 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
+import { Image } from 'astro:assets'
+import service1 from '../assets/fondos/service-1.png'
+import service2 from '../assets/fondos/service-2.png'
+import service3 from '../assets/fondos/service-3.png'
+import service4 from '../assets/fondos/service-4.png'
+import projectFeatured from '../assets/fondos/project-featured.png'
+import conoceTrabajo from '../assets/fondos/conoce_nuestro_trabajo.png'
 import { getSettings } from '../lib/settings'
 import { db } from '../lib/db'
 import { logos } from '../lib/db/schema'
@@ -12,7 +19,7 @@ const planillaUrl = settings.planilla_url
 const services = [
   {
     title: 'Instalaciones sanitarias',
-    img: '/images/fondos/Service%20Image.png',
+    img: service1,
     icon: '/images/iconos/instalaciones_sanitarias.png',
     box: 'bg-blue-600',
     body:
@@ -22,7 +29,7 @@ const services = [
   },
   {
     title: 'Instalaciones de gas',
-    img: '/images/fondos/Service%20Image-1.png',
+    img: service2,
     icon: '/images/iconos/instalaciones_gas.png',
     box: 'bg-violet-600',
     body:
@@ -32,7 +39,7 @@ const services = [
   },
   {
     title: 'Instalaciones contra incendio',
-    img: '/images/fondos/Service%20Image-2.png',
+    img: service3,
     icon: '/images/iconos/instalaciones_conta_incendio.png',
     box: 'bg-red-600',
     body:
@@ -42,7 +49,7 @@ const services = [
   },
   {
     title: 'Riego',
-    img: '/images/fondos/Service%20Image-3.png',
+    img: service4,
     icon: '/images/iconos/instalaciones_de_riego.png',
     box: 'bg-green-600',
     body: 'Trabajamos en conjunto con el equipo de paisajismo de la obra para realizar diseño, proyectos, cálculos hidráulicos y ejecución de instalaciones de riego automático, mediante goteo y aspersión.',
@@ -79,7 +86,7 @@ const provBottom = providers.slice(provHalf)
         services.map((s) => (
           <article class="hover-lift overflow-hidden rounded-2xl border border-line bg-white">
             <div class="aspect-[16/7] overflow-hidden">
-              <img src={s.img} alt={s.title} class="h-full w-full object-cover" loading="lazy" />
+              <Image src={s.img} alt={s.title} widths={[480, 800]} sizes="(min-width: 768px) 50vw, 100vw" format="webp" class="h-full w-full object-cover" loading="lazy" />
             </div>
             <div class="p-7">
               <div class="mb-4 flex items-center gap-4">
@@ -112,9 +119,12 @@ const provBottom = providers.slice(provHalf)
       <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-line" data-reveal="fade-up">
         <!-- Imagen banner arriba, a todo el ancho -->
         <div class="aspect-[21/6] w-full overflow-hidden">
-          <img
-            src="/images/fondos/Project%20Image.png"
+          <Image
+            src={projectFeatured}
             alt="Proyectos"
+            widths={[768, 1280, 1600]}
+            sizes="100vw"
+            format="webp"
             class="h-full w-full object-cover grayscale"
             loading="lazy"
           />
@@ -188,9 +198,13 @@ const provBottom = providers.slice(provHalf)
 
   <!-- CTA Conocé nuestro trabajo -->
   <section class="relative isolate flex min-h-[312px] items-center justify-center overflow-hidden">
-    <img
-      src="/images/fondos/conoce_nuestro_trabajo.png"
+    <Image
+      src={conoceTrabajo}
       alt=""
+      widths={[768, 1280, 1600]}
+      sizes="100vw"
+      format="webp"
+      loading="lazy"
       class="absolute inset-0 -z-10 h-full w-full object-cover"
     />
     <div

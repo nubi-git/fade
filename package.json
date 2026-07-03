@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@astrojs/node": "^9.5.5",
+    "@fontsource-variable/inter": "^5.2.8",
     "astro": "^5.7.0",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",

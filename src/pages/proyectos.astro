@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import ProjectCard from '../components/ProjectCard.astro'
+import { Image, getImage } from 'astro:assets'
+import obrasHero from '../assets/fondos/obras_y_servicios_hero.png'
+import brochureImg from '../assets/fondos/brochure_section_image.png'
 import { db } from '../lib/db'
 import { projects as projectsTable } from '../lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
@@ -9,6 +12,10 @@ import { getSettings } from '../lib/settings'
 
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const planillaUrl = settings.planilla_url
+
+// Hero (LCP de esta página): preload en WebP a ancho fijo.
+const heroWidth = 1600
+const heroPreload = await getImage({ src: obrasHero, width: heroWidth, format: 'webp' })
 
 const rows = await db
   .select()
@@ -26,11 +33,17 @@ const projects = rows.map((p) => ({
 ---
 
 <Layout title="Obras & Proyectos — FADE Ingeniería">
+  <link slot="head" rel="preload" as="image" href={heroPreload.src} fetchpriority="high" />
+
   <!-- Hero -->
   <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
-    <img
-      src="/images/fondos/obras_y_servicios_hero.png"
+    <Image
+      src={obrasHero}
       alt=""
+      width={heroWidth}
+      format="webp"
+      loading="eager"
+      fetchpriority="high"
       data-parallax="0.1"
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
@@ -158,9 +171,13 @@ const projects = rows.map((p) => ({
       <source src="/videos/obras.mp4" type="video/mp4" />
     </video>
     -->
-    <img
-      src="/images/fondos/brochure_section_image.png"
+    <Image
+      src={brochureImg}
       alt=""
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      format="webp"
+      loading="lazy"
       data-parallax="0.1"
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />

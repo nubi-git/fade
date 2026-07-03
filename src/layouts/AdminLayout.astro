@@ -1,6 +1,12 @@
 ---
 import "../styles/global.css";
+import { Image, getImage } from "astro:assets";
+import heroBg from "../assets/fondos/home_hero_image.png";
+import logoFade from "../assets/logos/logo_fade.png";
 import ConfirmDialog from "../components/admin/ConfirmDialog.astro";
+
+// Fondo del admin en WebP (no se puede usar <Image> en background CSS).
+const adminBg = await getImage({ src: heroBg, width: 1600, format: "webp" });
 
 interface Props {
   title?: string;
@@ -42,7 +48,8 @@ const icons: Record<string, string> = {
   <body class="relative min-h-screen text-ink">
     <!-- Fondo del admin: imagen + velo para legibilidad -->
     <div
-      class="pointer-events-none fixed inset-0 -z-20 bg-[url('/images/fondos/home_hero_image.png')] bg-cover bg-center"
+      class="pointer-events-none fixed inset-0 -z-20 bg-cover bg-center"
+      style={`background-image:url(${adminBg.src})`}
     ></div>
     <div class="pointer-events-none fixed inset-0 -z-10 bg-surface/80"></div>
 
@@ -51,7 +58,7 @@ const icons: Record<string, string> = {
         <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div class="flex items-center gap-6">
             <a href="/admin" aria-label="FADE Admin">
-              <img src="/images/logos/fade/logo_fade.png" alt="FADE" class="h-9 w-auto" />
+              <Image src={logoFade} alt="FADE" format="webp" class="h-9 w-auto" />
             </a>
             <!-- Nav desktop -->
             <nav class="hidden gap-4 text-sm md:flex">
