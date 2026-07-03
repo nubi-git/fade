@@ -28,14 +28,15 @@ if (Astro.request.method === "POST") {
     errors._form = `Demasiados envíos. Esperá ${limited.retryAfter} segundos e intentá de nuevo.`;
   } else {
     const parsed = parseForm(contactSchema, form);
-    const captchaOk = await verifyTurnstile(
+    const captcha = await verifyTurnstile(
       String(form.get("cf-turnstile-response") ?? ""),
       Astro.request.headers.get("cf-connecting-ip")
     );
     if (!parsed.success) {
       errors = parsed.errors;
-    } else if (!captchaOk) {
-      errors._form = "No pudimos verificar que no seas un robot. Reintentá la verificación.";
+    } else if (!captcha.ok) {
+      const codes = captcha.codes?.join(", ");
+      errors._form = `No pudimos verificar que no seas un robot. Reintentá la verificación.${codes ? ` [${codes}]` : ""}`;
     } else {
       try {
         const settings = await getSettings().catch(() => ({}) as Record<string, string>);
@@ -266,6 +267,18 @@ const mapSrc = (q: string) => `https://www.google.com/maps?q=${encodeURIComponen
       // Limpia el error mientras el usuario corrige el campo.
       Object.keys(rules).forEach((name) => {
         fieldEl(name)?.addEventListener("input", () => setError(name, ""));
+      });
+
+      // Código de país: siempre "+" seguido de dígitos (ej. +54).
+      const cod = document.getElementById("f-cod") as HTMLInputElement | null;
+      cod?.addEventListener("input", () => {
+        const digits = cod.value.replace(/\D/g, "");
+        cod.value = digits ? "+" + digits : "";
+      });
+      // Teléfono: solo dígitos, espacios y guiones.
+      const tel = document.getElementById("f-telefono") as HTMLInputElement | null;
+      tel?.addEventListener("input", () => {
+        tel.value = tel.value.replace(/[^\d\s-]/g, "");
       });
 
       form.addEventListener("submit", (e) => {
