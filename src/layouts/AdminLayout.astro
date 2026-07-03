@@ -103,5 +103,58 @@ const icons: Record<string, string> = {
     )}
 
     {user && <ConfirmDialog />}
+
+    <style>
+      /* Entrada suave del contenido al navegar entre secciones. */
+      @keyframes admin-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: none; }
+      }
+      main { animation: admin-in 0.35s ease both; }
+      @media (prefers-reduced-motion: reduce) {
+        main { animation: none; }
+      }
+
+      /* Estado "cargando" para cualquier botón al enviar un formulario. */
+      @keyframes admin-spin { to { transform: rotate(360deg); } }
+      button.is-loading {
+        position: relative;
+        color: transparent !important;
+        pointer-events: none;
+      }
+      button.is-loading::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 9999px;
+        border: 2px solid rgba(255, 255, 255, 0.55);
+        border-top-color: #fff;
+        animation: admin-spin 0.6s linear infinite;
+      }
+    </style>
+
+    <script>
+      // Al enviar cualquier formulario del admin, el botón que dispara la acción
+      // muestra un spinner. Cubre envíos normales y los del diálogo de
+      // confirmación (que usa requestSubmit, el cual sí emite el evento submit).
+      document.addEventListener(
+        "submit",
+        (e) => {
+          const form = e.target;
+          if (!(form instanceof HTMLFormElement)) return;
+          const btn =
+            (e as SubmitEvent).submitter ??
+            form.querySelector<HTMLButtonElement>("button[type=submit], button:not([type])");
+          if (btn instanceof HTMLButtonElement) {
+            btn.style.minWidth = `${btn.offsetWidth}px`; // evita que colapse
+            btn.classList.add("is-loading");
+          }
+        },
+        true,
+      );
+    </script>
   </body>
 </html>

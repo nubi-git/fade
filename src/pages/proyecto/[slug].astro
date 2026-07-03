@@ -23,12 +23,13 @@ const gallery = await db
   .where(eq(projectImages.projectId, project.id))
   .orderBy(asc(projectImages.sortOrder));
 
-const media =
-  gallery.length > 0
-    ? gallery.map((g) => ({ url: g.url, kind: g.kind }))
-    : project.coverImage
-      ? [{ url: project.coverImage, kind: "image" as const }]
-      : [];
+// La portada va como primera imagen del carrusel, seguida de la galería
+// (sin duplicarla si alguna imagen de la galería es la misma portada).
+const media: { url: string; kind: "image" | "video" }[] = [];
+if (project.coverImage) media.push({ url: project.coverImage, kind: "image" });
+for (const g of gallery) {
+  if (g.url !== project.coverImage) media.push({ url: g.url, kind: g.kind });
+}
 
 // Navegación entre proyectos (mismo orden que la lista pública)
 const ordered = await db

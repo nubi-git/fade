@@ -7,13 +7,12 @@ import { slugify } from "./slug";
 // Carpeta persistente fuera del build (en el VPS vive junto al proceso).
 export const UPLOAD_DIR = join(process.cwd(), "uploads");
 
-const ALLOWED = new Set([
-  ".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif", // imágenes
-  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", // documentos
+// Documentos: se guardan tal cual. Cualquier otra cosa se trata como imagen y
+// se convierte a WebP (sharp soporta jpg/jpeg/jfif/png/gif/webp/avif/tiff/bmp/
+// svg y más). Si no es una imagen procesable, sharp falla y se rechaza.
+const DOCUMENT_EXT = new Set([
+  ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt",
 ]);
-
-// Extensiones que se optimizan (se convierten a WebP y se redimensionan).
-const IMAGE_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".avif", ".gif"]);
 
 export interface SaveUploadOptions {
   /** Ancho máximo en px. Si la imagen es más ancha se reduce (nunca se agranda). */
@@ -39,9 +38,6 @@ export async function saveUpload(
   if (file.size === 0) return null;
 
   const ext = extname(file.name).toLowerCase();
-  if (!ALLOWED.has(ext)) {
-    throw new Error(`Tipo de archivo no permitido: ${ext}`);
-  }
 
   await mkdir(UPLOAD_DIR, { recursive: true });
 
@@ -49,21 +45,27 @@ export async function saveUpload(
   const suffix = randomUUID().slice(0, 8);
   const input = Buffer.from(await file.arrayBuffer());
 
-  if (IMAGE_EXT.has(ext)) {
-    const { maxWidth = 1600, quality = 80 } = opts;
-    const filename = `${base}-${suffix}.webp`;
-    const output = await sharp(input, { animated: true })
+  // Documentos: se guardan sin modificar.
+  if (DOCUMENT_EXT.has(ext)) {
+    const filename = `${base}-${suffix}${ext}`;
+    await writeFile(join(UPLOAD_DIR, filename), input);
+    return `/uploads/${filename}`;
+  }
+
+  // Todo lo demás se procesa como imagen → WebP optimizado.
+  const { maxWidth = 1600, quality = 80 } = opts;
+  const filename = `${base}-${suffix}.webp`;
+  let output: Buffer;
+  try {
+    output = await sharp(input, { animated: true })
       .rotate() // respeta la orientación EXIF de las fotos y la normaliza
       .resize({ width: maxWidth, withoutEnlargement: true })
       .webp({ quality })
       .toBuffer();
-    await writeFile(join(UPLOAD_DIR, filename), output);
-    return `/uploads/${filename}`;
+  } catch {
+    throw new Error("No se pudo procesar el archivo como imagen. Usá JPG, PNG, WebP, etc.");
   }
-
-  // Documentos: se guardan sin modificar.
-  const filename = `${base}-${suffix}${ext}`;
-  await writeFile(join(UPLOAD_DIR, filename), input);
+  await writeFile(join(UPLOAD_DIR, filename), output);
   return `/uploads/${filename}`;
 }
 

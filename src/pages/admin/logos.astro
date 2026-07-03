@@ -102,7 +102,7 @@ const groups = [
         </p>
         <input type="hidden" name="_action" value="addLogos" />
         <input type="hidden" name="kind" value={g.kind} />
-        <input type="file" name="images" accept="image/*" multiple class="block cursor-pointer text-sm text-body file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />
+        <input type="file" name="images" accept="image/*,.jfif" multiple class="block cursor-pointer text-sm text-body file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />
         <button type="submit" class="rounded-md bg-accent px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-hover">
           Subir {g.title.toLowerCase()}
         </button>

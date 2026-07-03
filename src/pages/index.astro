@@ -3,6 +3,9 @@ import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import ProjectCard from '../components/ProjectCard.astro'
 import { getSettings } from '../lib/settings'
+import { db } from '../lib/db'
+import { projects as projectsTable } from '../lib/db/schema'
+import { desc, eq } from 'drizzle-orm'
 
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const brochureUrl = settings.brochure_url
@@ -35,44 +38,22 @@ const services = [
   },
 ]
 
-const projects = [
-  {
-    name: 'Nombre del proyecto',
-    type: 'Instalación sanitaria',
-    year: 2023,
-    img: '/images/obras/Project image.png',
-  },
-  {
-    name: 'Nombre del proyecto',
-    type: 'Instalación de gas',
-    year: 2023,
-    img: '/images/obras/Project image-1.png',
-  },
-  {
-    name: 'Nombre del proyecto',
-    type: 'Contra incendio',
-    year: 2022,
-    img: '/images/obras/Project image-2.png',
-  },
-  {
-    name: 'Nombre del proyecto',
-    type: 'Riego',
-    year: 2022,
-    img: '/images/obras/Project image-3.png',
-  },
-  {
-    name: 'Nombre del proyecto',
-    type: 'Instalación sanitaria',
-    year: 2021,
-    img: '/images/obras/Project image-4.png',
-  },
-  {
-    name: 'Nombre del proyecto',
-    type: 'Instalación integral',
-    year: 2021,
-    img: '/images/obras/Project image-5.png',
-  },
-]
+// Primeros 6 proyectos publicados (mismo orden que la lista pública).
+const dbProjects = await db
+  .select()
+  .from(projectsTable)
+  .where(eq(projectsTable.published, true))
+  .orderBy(desc(projectsTable.sortOrder), desc(projectsTable.createdAt))
+  .limit(6)
+  .catch(() => [])
+
+const projects = dbProjects.map((p) => ({
+  name: p.name,
+  type: p.type,
+  year: p.year ?? '',
+  img: p.coverImage || '/images/obras/Project image.png',
+  href: `/proyecto/${p.slug}`,
+}))
 ---
 
 <Layout title="FADE Ingeniería — Instalaciones">
