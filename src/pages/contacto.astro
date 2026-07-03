@@ -56,9 +56,12 @@ if (Astro.request.method === "POST") {
 }
 
 const inputBase =
-  "mt-1.5 block w-full min-w-0 rounded-md border border-line px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand";
+  "mt-1.5 block w-full min-w-0 rounded-md border border-line px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand aria-[invalid=true]:border-red-500 aria-[invalid=true]:focus:ring-red-500";
 const phoneInput =
   "min-w-0 rounded-md border border-line px-4 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:border-brand focus:ring-1 focus:ring-brand";
+
+// ¿Hubo algún error al enviar? (de campo o general) → para el resumen accesible.
+const hasErrors = Object.keys(errors).length > 0;
 
 const office = {
   title: "Nuestra Oficina",
@@ -95,54 +98,81 @@ const mapSrc = (q: string) => `https://www.google.com/maps?q=${encodeURIComponen
           <p class="mt-2 text-body">Gracias por escribirnos. Te vamos a responder a la brevedad.</p>
         </div>
       ) : (
-        <form method="POST" class="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-7" data-reveal="fade-up" novalidate>
-          {errors._form && (
-            <p class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700" role="alert">{errors._form}</p>
-          )}
+        <form method="POST" data-contact class="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-7" data-reveal="fade-up" novalidate>
+          {/* Resumen de errores (accesible: anunciado y enfocable). */}
+          <div
+            id="form-errors"
+            role="alert"
+            tabindex="-1"
+            class:list={[
+              "mb-4 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700",
+              { hidden: !hasErrors },
+            ]}
+          >
+            {errors._form ?? "Revisá los campos marcados e intentá de nuevo."}
+          </div>
+
+          <p class="mb-4 text-xs text-muted">Los campos con <span class="text-red-600">*</span> son obligatorios.</p>
+
           <div class="space-y-4">
             {/* Honeypot antispam (oculto a usuarios) */}
             <input type="text" name="website" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
 
-            <label class="block">
-              <span class="text-sm font-medium text-ink">Nombre completo</span>
-              <input type="text" name="nombre" value={values.nombre} required placeholder="Lucas Fernandez" class={inputBase} aria-invalid={errors.nombre ? "true" : undefined} />
-              {errors.nombre && <p class="field-error" role="alert">{errors.nombre}</p>}
-            </label>
-            <label class="block">
-              <span class="text-sm font-medium text-ink">Empresa</span>
-              <input type="text" name="empresa" value={values.empresa} placeholder="Innovaciones Creativas S.A." class={inputBase} />
-            </label>
-            <label class="block">
-              <span class="text-sm font-medium text-ink">Cargo</span>
-              <input type="text" name="cargo" value={values.cargo} placeholder="Manager" class={inputBase} />
-            </label>
-            <label class="block">
-              <span class="text-sm font-medium text-ink">Email</span>
-              <input type="email" name="email" value={values.email} required placeholder="ejemplo@mail.com" class={inputBase} aria-invalid={errors.email ? "true" : undefined} />
-              {errors.email && <p class="field-error" role="alert">{errors.email}</p>}
-            </label>
             <div>
-              <span class="text-sm font-medium text-ink">Teléfono</span>
+              <label for="f-nombre" class="text-sm font-medium text-ink">
+                Nombre completo <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <input id="f-nombre" type="text" name="nombre" value={values.nombre} required aria-required="true" autocomplete="name" placeholder="Lucas Fernandez" class={inputBase} aria-invalid={errors.nombre ? "true" : undefined} aria-describedby="e-nombre" />
+              <p id="e-nombre" class="field-error" role="alert" class:list={{ hidden: !errors.nombre }}>{errors.nombre}</p>
+            </div>
+
+            <div>
+              <label for="f-empresa" class="text-sm font-medium text-ink">Empresa</label>
+              <input id="f-empresa" type="text" name="empresa" value={values.empresa} autocomplete="organization" placeholder="Innovaciones Creativas S.A." class={inputBase} />
+            </div>
+
+            <div>
+              <label for="f-cargo" class="text-sm font-medium text-ink">Cargo</label>
+              <input id="f-cargo" type="text" name="cargo" value={values.cargo} autocomplete="organization-title" placeholder="Manager" class={inputBase} />
+            </div>
+
+            <div>
+              <label for="f-email" class="text-sm font-medium text-ink">
+                Email <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <input id="f-email" type="email" name="email" value={values.email} required aria-required="true" autocomplete="email" inputmode="email" placeholder="ejemplo@mail.com" class={inputBase} aria-invalid={errors.email ? "true" : undefined} aria-describedby="e-email" />
+              <p id="e-email" class="field-error" role="alert" class:list={{ hidden: !errors.email }}>{errors.email}</p>
+            </div>
+
+            <div>
+              <label for="f-telefono" class="text-sm font-medium text-ink">Teléfono</label>
               <div class="mt-1.5 flex gap-3">
-                <input type="text" name="cod" value={values.cod} placeholder="+ 00" class={`w-20 shrink-0 ${phoneInput}`} />
-                <input type="tel" name="telefono" value={values.telefono} placeholder="00 0000 0000" class={`flex-1 ${phoneInput}`} />
+                <input id="f-cod" type="text" name="cod" value={values.cod} inputmode="tel" aria-label="Código de país" placeholder="+ 00" class={`w-20 shrink-0 ${phoneInput}`} />
+                <input id="f-telefono" type="tel" name="telefono" value={values.telefono} autocomplete="tel" inputmode="tel" placeholder="00 0000 0000" class={`flex-1 ${phoneInput}`} />
               </div>
             </div>
-            <label class="block">
-              <span class="text-sm font-medium text-ink">Mensaje</span>
-              <textarea name="mensaje" rows="4" required placeholder="Escriba su mensaje..." class={inputBase} aria-invalid={errors.mensaje ? "true" : undefined}>{values.mensaje}</textarea>
-              {errors.mensaje && <p class="field-error" role="alert">{errors.mensaje}</p>}
-            </label>
+
+            <div>
+              <label for="f-mensaje" class="text-sm font-medium text-ink">
+                Mensaje <span class="text-red-600" aria-hidden="true">*</span>
+              </label>
+              <textarea id="f-mensaje" name="mensaje" rows="4" required aria-required="true" placeholder="Escriba su mensaje..." class={inputBase} aria-invalid={errors.mensaje ? "true" : undefined} aria-describedby="e-mensaje">{values.mensaje}</textarea>
+              <p id="e-mensaje" class="field-error" role="alert" class:list={{ hidden: !errors.mensaje }}>{errors.mensaje}</p>
+            </div>
 
             {turnstileOn && (
-              <div class="flex justify-center pt-1">
-                <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="light"></div>
+              <div>
+                <div class="flex justify-center pt-1">
+                  <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="light"></div>
+                </div>
+                <p id="e-turnstile" class="field-error hidden text-center" role="alert"></p>
               </div>
             )}
 
             <button
+              id="contact-submit"
               type="submit"
-              class="mt-1 w-full rounded-md bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+              class="btn-loading mt-1 w-full rounded-md bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover disabled:opacity-70"
             >
               Enviar
             </button>
@@ -185,4 +215,103 @@ const mapSrc = (q: string) => `https://www.google.com/maps?q=${encodeURIComponen
   {turnstileOn && (
     <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   )}
+
+  <style>
+    /* Spinner de "enviando" en el botón del formulario. */
+    button.is-loading { position: relative; color: transparent !important; pointer-events: none; }
+    button.is-loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 1.1rem;
+      height: 1.1rem;
+      border-radius: 9999px;
+      border: 2px solid rgba(255, 255, 255, 0.55);
+      border-top-color: #fff;
+      animation: contact-spin 0.6s linear infinite;
+    }
+    @keyframes contact-spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>("form[data-contact]");
+    if (form) {
+      const summary = document.getElementById("form-errors");
+      const submitBtn = document.getElementById("contact-submit") as HTMLButtonElement | null;
+      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      const rules: Record<string, (v: string) => string> = {
+        nombre: (v) => (v.trim() ? "" : "El nombre es obligatorio."),
+        email: (v) =>
+          !v.trim() ? "El email es obligatorio." : emailRe.test(v.trim()) ? "" : "Ingresá un email válido.",
+        mensaje: (v) => (v.trim() ? "" : "El mensaje es obligatorio."),
+      };
+
+      const fieldEl = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | null;
+
+      function setError(name: string, msg: string) {
+        const input = fieldEl(name);
+        const err = document.getElementById("e-" + name);
+        if (err) {
+          err.textContent = msg;
+          err.classList.toggle("hidden", !msg);
+        }
+        if (input) {
+          if (msg) input.setAttribute("aria-invalid", "true");
+          else input.removeAttribute("aria-invalid");
+        }
+      }
+
+      // Limpia el error mientras el usuario corrige el campo.
+      Object.keys(rules).forEach((name) => {
+        fieldEl(name)?.addEventListener("input", () => setError(name, ""));
+      });
+
+      form.addEventListener("submit", (e) => {
+        let firstInvalid: HTMLElement | null = null;
+        for (const [name, rule] of Object.entries(rules)) {
+          const input = fieldEl(name);
+          const msg = rule(input?.value ?? "");
+          setError(name, msg);
+          if (msg && !firstInvalid) firstInvalid = input;
+        }
+
+        // Turnstile: si el widget está presente, exige el token antes de enviar.
+        let tsError = false;
+        if (form.querySelector(".cf-turnstile")) {
+          const token = form.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]');
+          const tsErrEl = document.getElementById("e-turnstile");
+          if (!token || !token.value) {
+            tsError = true;
+            if (tsErrEl) {
+              tsErrEl.textContent = "Completá la verificación anti-robot.";
+              tsErrEl.classList.remove("hidden");
+            }
+          } else tsErrEl?.classList.add("hidden");
+        }
+
+        if (firstInvalid || tsError) {
+          e.preventDefault();
+          if (summary) {
+            summary.textContent = "Revisá los campos marcados e intentá de nuevo.";
+            summary.classList.remove("hidden");
+          }
+          (firstInvalid ?? summary)?.focus();
+          return;
+        }
+
+        // Todo OK → estado "enviando".
+        if (submitBtn) {
+          submitBtn.classList.add("is-loading");
+          submitBtn.disabled = true;
+        }
+      });
+
+      // Tras recargar con errores del servidor, llevar el foco al primero.
+      const serverInvalid = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (serverInvalid) serverInvalid.focus();
+      else if (summary && !summary.classList.contains("hidden")) summary.focus();
+    }
+  </script>
 </Layout>
