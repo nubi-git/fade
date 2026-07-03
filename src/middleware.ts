@@ -35,18 +35,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
       // Detrás de un reverse proxy (Passenger), el host real que pidió el
       // navegador viene en x-forwarded-host; lo usamos como fuente de verdad.
+      // Detrás de Passenger, context.url.host es "localhost" (la dirección
+      // interna donde escucha el adapter Node). El host real que pidió el
+      // navegador viene en x-forwarded-host o, en su defecto, en el header Host.
       const expectedHost =
-        context.request.headers.get("x-forwarded-host") ?? context.url.host;
+        context.request.headers.get("x-forwarded-host") ??
+        context.request.headers.get("host") ??
+        context.url.host;
       if (originHost !== expectedHost) {
-        // DEBUG temporal: muestra los valores para diagnosticar el proxy.
-        return new Response(
-          `Origen no permitido | origin=${originHost} | expected=${expectedHost} | x-forwarded-host=${context.request.headers.get(
-            "x-forwarded-host",
-          )} | url.host=${context.url.host} | host-header=${context.request.headers.get(
-            "host",
-          )}`,
-          { status: 403 },
-        );
+        return new Response("Origen no permitido", { status: 403 });
       }
     }
   }
