@@ -1,5 +1,30 @@
 import { defineMiddleware } from "astro:middleware";
+import { readFile } from "node:fs/promises";
+import { join, basename, extname } from "node:path";
 import { SESSION_COOKIE, validateSession } from "./lib/auth";
+
+// Carpeta persistente de archivos subidos (misma que usa lib/uploads.ts).
+const UPLOAD_DIR = join(process.cwd(), "uploads");
+
+// Content-Type por extensión para servir /uploads/ desde la app (detrás de
+// Passenger todas las peticiones pasan por Node; los estáticos del build los
+// sirve Astro, pero uploads/ es una carpeta aparte que hay que servir a mano).
+const UPLOAD_MIME: Record<string, string> = {
+  ".webp": "image/webp",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".avif": "image/avif",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain; charset=utf-8",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+};
 
 // CSP: permite recursos propios + los externos que realmente usamos
 // (Google Fonts, mapas embebidos, Cloudflare Turnstile). 'unsafe-inline' es
@@ -22,6 +47,27 @@ const CSP = [
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Sirve los archivos subidos (/uploads/...) desde la carpeta persistente.
+  if (context.url.pathname.startsWith("/uploads/")) {
+    const name = basename(context.url.pathname);
+    if (!name || name.includes("..")) {
+      return new Response("No encontrado", { status: 404 });
+    }
+    try {
+      const data = await readFile(join(UPLOAD_DIR, name));
+      const type = UPLOAD_MIME[extname(name).toLowerCase()] ?? "application/octet-stream";
+      return new Response(data, {
+        headers: {
+          "Content-Type": type,
+          // Nombres con hash único → se pueden cachear agresivamente.
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } catch {
+      return new Response("No encontrado", { status: 404 });
+    }
+  }
+
   // Anti-CSRF: en peticiones que modifican estado, si viene header Origin
   // (todo navegador lo envía en envíos cross-site) debe coincidir con el host.
   if (UNSAFE_METHODS.has(context.request.method)) {
