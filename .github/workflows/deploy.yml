@@ -1,0 +1,63 @@
+name: Deploy a producción
+
+# Se dispara en cada push a main (o manualmente desde la pestaña Actions).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Evita que dos deploys corran a la vez pisándose.
+concurrency:
+  group: deploy-produccion
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      # Instala TODAS las dependencias (incluye devDeps: Tailwind/Drizzle) y
+      # compila. Si la build falla, el deploy no continúa (actúa como test).
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar (build)
+        run: npm run build
+
+      # Carga la clave privada de deploy (guardada en Secrets) en el agente SSH.
+      - name: Configurar clave SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Registrar host conocido
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      # Sube el build compilado. --delete limpia archivos viejos del dist.
+      # OJO: solo sincroniza dist/ y los package*.json; NO toca uploads/ ni .env.
+      - name: Subir build al servidor
+        run: |
+          rsync -az --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/dist/"
+          rsync -az \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            package.json package-lock.json \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      # En el servidor: instala solo deps de producción (liviano, sin OOM) y
+      # reinicia la app de Passenger tocando tmp/restart.txt.
+      - name: Instalar deps de producción y reiniciar
+        run: |
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "source /home/fade/nodevenv/fadeing/24/bin/activate && cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev && mkdir -p tmp && touch tmp/restart.txt"
