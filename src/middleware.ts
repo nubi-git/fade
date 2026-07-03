@@ -33,7 +33,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
       } catch {
         return new Response("Origen inválido", { status: 403 });
       }
-      if (originHost !== context.url.host) {
+      // Detrás de un reverse proxy (Passenger), el host real que pidió el
+      // navegador viene en x-forwarded-host; lo usamos como fuente de verdad.
+      const expectedHost =
+        context.request.headers.get("x-forwarded-host") ?? context.url.host;
+      if (originHost !== expectedHost) {
         return new Response("Origen no permitido", { status: 403 });
       }
     }
