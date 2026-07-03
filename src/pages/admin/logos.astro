@@ -31,7 +31,7 @@ if (Astro.request.method === "POST") {
     let i = 0;
     try {
       for (const f of files) {
-        const url = await saveUpload(f);
+        const url = await saveUpload(f, { maxWidth: 500, quality: 90 });
         if (!url) continue;
         await db.insert(logos).values({
           id: newId(),
@@ -97,6 +97,9 @@ const groups = [
       )}
 
       <form method="POST" enctype="multipart/form-data" class="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-line p-4">
+        <p class="w-full text-xs text-muted">
+          Recomendado: PNG con fondo transparente. Se convierte a WebP y se ajusta a ~500px de ancho automáticamente. Ideal ~500×250px.
+        </p>
         <input type="hidden" name="_action" value="addLogos" />
         <input type="hidden" name="kind" value={g.kind} />
         <input type="file" name="images" accept="image/*" multiple class="block cursor-pointer text-sm text-body file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white" />

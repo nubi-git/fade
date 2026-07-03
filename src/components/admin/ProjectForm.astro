@@ -52,7 +52,7 @@ const formError = errors._form;
   </FormSection>
 
   <FormSection title="Portada y publicación" cols={2}>
-    <FileInput label="Imagen de portada" name="cover" accept="image/*" hint="Se usa como miniatura en el listado.">
+    <FileInput label="Imagen de portada" name="cover" accept="image/*" hint="Miniatura del listado. Se convierte a WebP y se ajusta a ~1600px. Recomendado horizontal ~1600×1200px.">
       {coverImage && <img src={coverImage} alt="Portada actual" class="mt-3 h-24 w-36 rounded-lg object-cover ring-1 ring-line" />}
     </FileInput>
     <TextInput label="Orden" name="sortOrder" type="number" value={values.sortOrder} error={errors.sortOrder} hint="Mayor número aparece primero." />
