@@ -41,17 +41,16 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      # Sube el build compilado. --delete limpia archivos viejos del dist.
-      # OJO: solo sincroniza dist/ y los package*.json; NO toca uploads/ ni .env.
+      # El servidor no tiene rsync, así que empaquetamos con tar y lo mandamos
+      # por SSH. Primero borramos el dist/ viejo (limpieza), luego extraemos el
+      # nuevo. Solo toca dist/ y los package*.json; NO toca uploads/ ni .env.
       - name: Subir build al servidor
         run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
-            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/dist/"
-          rsync -az \
-            -e "ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT }}" \
-            package.json package-lock.json \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+          ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "rm -rf '${{ secrets.DEPLOY_PATH }}/dist'"
+          tar czf - dist package.json package-lock.json | \
+            ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && tar xzf -"
 
       # En el servidor: instala solo deps de producción (liviano, sin OOM) y
       # reinicia la app de Passenger tocando tmp/restart.txt.
