@@ -54,7 +54,10 @@ jobs:
 
       # En el servidor: instala solo deps de producción (liviano, sin OOM) y
       # reinicia la app de Passenger tocando tmp/restart.txt.
+      # npm install incremental (NO npm ci): no borra node_modules ni redescarga
+      # sharp si las dependencias no cambiaron → rápido y sin colgarse.
       - name: Instalar deps de producción y reiniciar
+        timeout-minutes: 5
         run: |
           ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "source /home/fade/nodevenv/fadeing/24/bin/activate && cd ${{ secrets.DEPLOY_PATH }} && npm ci --omit=dev && mkdir -p tmp && touch tmp/restart.txt"
+            "source /home/fade/nodevenv/fadeing/24/bin/activate && cd ${{ secrets.DEPLOY_PATH }} && npm install --omit=dev --no-audit --no-fund --prefer-offline && mkdir -p tmp && touch tmp/restart.txt"
