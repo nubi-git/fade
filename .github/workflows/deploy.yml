@@ -64,31 +64,33 @@ jobs:
           name: dist
           path: dist
 
-      # La clave privada se guarda en el Secret en base64 (una sola línea, así
-      # no se corrompe al copiar). Se decodifica a un archivo; el valor nunca se
-      # imprime en el log (el echo va a un pipe, no a stdout).
-      - name: Preparar clave SSH
+      # Carga la clave PEM (Secret, sin transformar) en el agente SSH. Acción de
+      # tercero pinneada a SHA (v0.9.1). No se hace echo/base64 del secret.
+      - name: Cargar clave SSH en el agente
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Registrar host conocido
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | base64 -d > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
       # El servidor no tiene rsync → tar sobre SSH. Se respalda el dist actual en
       # dist.bak (para rollback) antes de reemplazarlo. NO toca uploads/ ni .env.
       - name: Subir build al servidor
         run: |
-          ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "cd ${{ secrets.DEPLOY_PATH }} && rm -rf dist.bak && { [ -d dist ] && mv dist dist.bak || true; }"
           tar czf - dist package.json package-lock.json | \
-            ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "cd ${{ secrets.DEPLOY_PATH }} && tar xzf -"
 
       # npm ci SOLO si cambió el lockfile (comparando un hash guardado). Si no
       # cambió, se omite → rápido y sin redescargar sharp. Luego reinicia.
       - name: Instalar deps de producción y reiniciar
         run: |
-          ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "
             source /home/fade/nodevenv/fadeing/24/bin/activate &&
             cd ${{ secrets.DEPLOY_PATH }} &&
             NEW=\$(md5sum package-lock.json | cut -d' ' -f1) &&
@@ -115,5 +117,5 @@ jobs:
       - name: Rollback si el deploy falló
         if: failure()
         run: |
-          ssh -i ~/.ssh/id_deploy -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+          ssh -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "cd ${{ secrets.DEPLOY_PATH }} && if [ -d dist.bak ]; then rm -rf dist && mv dist.bak dist && mkdir -p tmp && touch tmp/restart.txt && echo 'Rollback aplicado'; else echo 'Sin backup para rollback'; fi"
