@@ -1,7 +1,5 @@
 ---
-import { Image } from "astro:assets";
-import logoDark from "../assets/logos/logo_fade.png";
-import logoLight from "../assets/logos/logo_fade_blanco.png";
+import OptImage from "./OptImage.astro";
 
 interface Props {
   variant?: "dark" | "light";
@@ -9,9 +7,12 @@ interface Props {
   imgClass?: string;
 }
 const { variant = "dark", class: className = "", imgClass = "h-11" } = Astro.props;
-const src = variant === "light" ? logoLight : logoDark;
+const isLight = variant === "light";
+const name = isLight ? "logo-fade-blanco" : "logo-fade";
+const w = isLight ? 252 : 200;
+const h = isLight ? 123 : 74;
 ---
 
 <a href="/" class={`inline-flex items-center ${className}`} aria-label="FADE Ingeniería - inicio">
-  <Image src={src} alt="FADE Ingeniería" format="webp" class={`w-auto ${imgClass}`} />
+  <OptImage name={name} widths={[w]} width={w} height={h} sizes={`${w}px`} alt="FADE Ingeniería" class={`w-auto ${imgClass}`} />
 </a>

@@ -1,16 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import ContactCta from "../components/ContactCta.astro";
-import { Image, getImage } from "astro:assets";
-import nosotrosHero from "../assets/fondos/nosotros_hero_image.png";
-import testimonialsImg from "../assets/fondos/testimonials_image.png";
+import OptImage from "../components/OptImage.astro";
 import { db } from "../lib/db";
 import { logos } from "../lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 
-// Hero (LCP): preload en WebP.
-const heroWidth = 1600;
-const heroPreload = await getImage({ src: nosotrosHero, width: heroWidth, format: "webp" });
+// Hero (LCP): srcset para el preload responsive.
+const heroWidths = [768, 1200, 1512];
+const heroSrcset = heroWidths.map((w) => `/images/opt/nosotros-hero-${w}.webp ${w}w`).join(", ");
 
 const rows = await db
   .select()
@@ -27,11 +25,11 @@ const rowBottom = clients.slice(half);
 ---
 
 <Layout title="Nosotros — FADE Ingeniería">
-  <link slot="head" rel="preload" as="image" href={heroPreload.src} fetchpriority="high" />
+  <link slot="head" rel="preload" as="image" imagesrcset={heroSrcset} imagesizes="100vw" fetchpriority="high" />
 
   <!-- Hero -->
   <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
-    <Image src={nosotrosHero} alt="" width={heroWidth} format="webp" loading="eager" fetchpriority="high" data-parallax="0.1" class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover" />
+    <OptImage name="nosotros-hero" widths={heroWidths} width={1512} height={800} sizes="100vw" loading="eager" fetchpriority="high" parallax class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover" />
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-brand-dark/85 via-ink/80 to-black/80"></div>
     <div class="mx-auto w-full max-w-7xl px-6 lg:px-10" data-reveal-group data-reveal-stagger="120">
       <h1 class="max-w-3xl text-4xl font-extrabold leading-tight text-white sm:text-5xl lg:text-6xl">
@@ -81,12 +79,13 @@ const rowBottom = clients.slice(half);
       <a href="/medios" class="btn shrink-0 max-sm:w-full">Conocer más</a>
     </div>
     <div class="mt-8 overflow-hidden rounded-xl" data-reveal="fade-scale" data-reveal-delay="100">
-      <Image
-        src={testimonialsImg}
+      <OptImage
+        name="testimonials"
         alt="FADE en los medios"
-        widths={[768, 1280, 1600]}
+        widths={[768, 1200, 1352]}
+        width={1352}
+        height={300}
         sizes="100vw"
-        format="webp"
         loading="lazy"
         class="h-[320px] w-full object-cover grayscale"
       />

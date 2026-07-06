@@ -2,9 +2,7 @@
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import ProjectCard from '../components/ProjectCard.astro'
-import { Image, getImage } from 'astro:assets'
-import obrasHero from '../assets/fondos/obras_y_servicios_hero.png'
-import brochureImg from '../assets/fondos/brochure_section_image.png'
+import OptImage from '../components/OptImage.astro'
 import { db } from '../lib/db'
 import { projects as projectsTable } from '../lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
@@ -13,9 +11,9 @@ import { getSettings } from '../lib/settings'
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const planillaUrl = settings.planilla_url
 
-// Hero (LCP de esta página): preload en WebP a ancho fijo.
-const heroWidth = 1600
-const heroPreload = await getImage({ src: obrasHero, width: heroWidth, format: 'webp' })
+// Hero (LCP de esta página): srcset para el preload responsive.
+const heroWidths = [768, 1200, 1512]
+const heroSrcset = heroWidths.map((w) => `/images/opt/obras-hero-${w}.webp ${w}w`).join(', ')
 
 const rows = await db
   .select()
@@ -33,18 +31,19 @@ const projects = rows.map((p) => ({
 ---
 
 <Layout title="Obras & Proyectos — FADE Ingeniería">
-  <link slot="head" rel="preload" as="image" href={heroPreload.src} fetchpriority="high" />
+  <link slot="head" rel="preload" as="image" imagesrcset={heroSrcset} imagesizes="100vw" fetchpriority="high" />
 
   <!-- Hero -->
   <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
-    <Image
-      src={obrasHero}
-      alt=""
-      width={heroWidth}
-      format="webp"
+    <OptImage
+      name="obras-hero"
+      widths={heroWidths}
+      width={1512}
+      height={800}
+      sizes="100vw"
       loading="eager"
       fetchpriority="high"
-      data-parallax="0.1"
+      parallax
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-brand-dark/85 via-ink/80 to-black/80">
@@ -171,14 +170,14 @@ const projects = rows.map((p) => ({
       <source src="/videos/obras.mp4" type="video/mp4" />
     </video>
     -->
-    <Image
-      src={brochureImg}
-      alt=""
-      widths={[768, 1280, 1920]}
+    <OptImage
+      name="brochure"
+      widths={[768, 1200, 1512]}
+      width={1512}
+      height={700}
       sizes="100vw"
-      format="webp"
       loading="lazy"
-      data-parallax="0.1"
+      parallax
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
     <div class="absolute inset-0 -z-10 bg-black/35"></div>

@@ -2,15 +2,7 @@
 import Layout from '../layouts/Layout.astro'
 import ContactCta from '../components/ContactCta.astro'
 import ProjectCard from '../components/ProjectCard.astro'
-import { Image, getImage } from 'astro:assets'
-import heroImg from '../assets/fondos/home_hero_image.png'
-import brochureImg from '../assets/fondos/brochure_section_image.png'
-import testimonialsImg from '../assets/fondos/testimonials_image.png'
-import cardSanitarias from '../assets/fondos/servicios_card_sanitarias.png'
-import cardGas from '../assets/fondos/servicios_card_gas.png'
-import cardIncendio from '../assets/fondos/servicios_card_incendio.png'
-import cardRiego from '../assets/fondos/servicios_card_riego.png'
-import cardIngenieria from '../assets/fondos/servicios_card_ingenieria.png'
+import OptImage from '../components/OptImage.astro'
 import { getSettings } from '../lib/settings'
 import { db } from '../lib/db'
 import { projects as projectsTable } from '../lib/db/schema'
@@ -19,35 +11,35 @@ import { desc, eq } from 'drizzle-orm'
 const settings = await getSettings().catch(() => ({}) as Record<string, string>)
 const brochureUrl = settings.brochure_url
 
-// Hero = candidata a LCP: la precargamos en WebP a un ancho fijo.
-const heroWidth = 1600
-const heroPreload = await getImage({ src: heroImg, width: heroWidth, format: 'webp' })
+// Hero (LCP): srcset para el preload responsive (imágenes ya generadas en build).
+const heroWidths = [768, 1200, 1512]
+const heroSrcset = heroWidths.map((w) => `/images/opt/home-hero-${w}.webp ${w}w`).join(', ')
 
 const services = [
   {
     title: 'Instalaciones sanitarias',
     icon: '/images/iconos/instalaciones_sanitarias.png',
-    img: cardSanitarias,
+    img: 'card-sanitarias',
   },
   {
     title: 'Instalaciones de gas',
     icon: '/images/iconos/instalaciones_gas.png',
-    img: cardGas,
+    img: 'card-gas',
   },
   {
     title: 'Instalaciones contra incendio',
     icon: '/images/iconos/instalaciones_conta_incendio.png',
-    img: cardIncendio,
+    img: 'card-incendio',
   },
   {
     title: 'Riego',
     icon: '/images/iconos/instalaciones_de_riego.png',
-    img: cardRiego,
+    img: 'card-riego',
   },
   {
     title: 'Proyectos e Ingeniería',
     icon: '/images/iconos/proyectos_e_ingenieria.png',
-    img: cardIngenieria,
+    img: 'card-ingenieria',
   },
 ]
 
@@ -70,18 +62,19 @@ const projects = dbProjects.map((p) => ({
 ---
 
 <Layout title="FADE Ingeniería — Instalaciones">
-  <link slot="head" rel="preload" as="image" href={heroPreload.src} fetchpriority="high" />
+  <link slot="head" rel="preload" as="image" imagesrcset={heroSrcset} imagesizes="100vw" fetchpriority="high" />
 
   <!-- Hero -->
   <section class="relative isolate flex min-h-[540px] sm:min-h-[700px] items-center overflow-hidden text-white">
-    <Image
-      src={heroImg}
-      alt=""
-      width={heroWidth}
-      format="webp"
+    <OptImage
+      name="home-hero"
+      widths={heroWidths}
+      width={1512}
+      height={800}
+      sizes="100vw"
       loading="eager"
       fetchpriority="high"
-      data-parallax="0.1"
+      parallax
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-brand-dark/85 via-ink/80 to-black/80">
@@ -116,12 +109,12 @@ const projects = dbProjects.map((p) => ({
             href="/servicios"
             class="group relative isolate flex aspect-[3/4] flex-col items-center justify-center gap-5 overflow-hidden rounded-xl p-5 text-center transition-shadow duration-300 hover:shadow-xl"
           >
-            <Image
-              src={s.img}
-              alt=""
-              widths={[240, 480]}
+            <OptImage
+              name={s.img}
+              widths={[252]}
+              width={252}
+              height={282}
               sizes="(min-width: 1024px) 20vw, 50vw"
-              format="webp"
               class="absolute inset-0 -z-20 h-full w-full object-cover grayscale transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
@@ -171,14 +164,14 @@ const projects = dbProjects.map((p) => ({
       <source src="/videos/brochure.mp4" type="video/mp4" />
     </video>
     -->
-    <Image
-      src={brochureImg}
-      alt=""
-      widths={[768, 1280, 1920]}
+    <OptImage
+      name="brochure"
+      widths={[768, 1200, 1512]}
+      width={1512}
+      height={700}
       sizes="100vw"
-      format="webp"
       loading="lazy"
-      data-parallax="0.1"
+      parallax
       class="absolute -top-[10%] left-0 -z-20 h-[120%] w-full object-cover"
     />
     <div class="absolute inset-0 -z-10 bg-black/35"></div>
@@ -205,12 +198,13 @@ const projects = dbProjects.map((p) => ({
       <a href="/medios" class="btn shrink-0 max-sm:w-full"> Conocer más </a>
     </div>
     <div class="mt-8 overflow-hidden rounded-xl" data-reveal="fade-scale" data-reveal-delay="100">
-      <Image
-        src={testimonialsImg}
-        alt="FADE en los medios"
-        widths={[768, 1280, 1600]}
+      <OptImage
+        name="testimonials"
+        widths={[768, 1200, 1352]}
+        width={1352}
+        height={300}
         sizes="100vw"
-        format="webp"
+        alt="FADE en los medios"
         loading="lazy"
         class="h-[320px] w-full object-cover grayscale"
       />

@@ -1,0 +1,46 @@
+---
+// Sirve una imagen WebP pre-generada (por scripts/optimize-images.mjs) desde
+// public/images/opt/, con srcset responsive y width/height explícitos (CLS).
+interface Props {
+  name: string; // ej. "home-hero" (coincide con el nombre generado)
+  widths: number[]; // anchos disponibles en /images/opt
+  width: number; // ancho intrínseco (para el atributo width)
+  height: number; // alto intrínseco (para el atributo height)
+  sizes?: string;
+  alt?: string;
+  class?: string;
+  loading?: "eager" | "lazy";
+  fetchpriority?: "high" | "low" | "auto";
+  parallax?: boolean;
+}
+const {
+  name,
+  widths,
+  width,
+  height,
+  sizes = "100vw",
+  alt = "",
+  class: cls = "",
+  loading = "lazy",
+  fetchpriority,
+  parallax = false,
+} = Astro.props;
+
+const base = "/images/opt";
+const srcset = widths.map((w) => `${base}/${name}-${w}.webp ${w}w`).join(", ");
+const src = `${base}/${name}-${widths[widths.length - 1]}.webp`;
+---
+
+<img
+  src={src}
+  srcset={srcset}
+  sizes={sizes}
+  width={width}
+  height={height}
+  alt={alt}
+  loading={loading}
+  fetchpriority={fetchpriority}
+  decoding="async"
+  data-parallax={parallax ? "0.1" : undefined}
+  class={cls}
+/>

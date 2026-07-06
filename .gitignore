@@ -19,3 +19,6 @@ node_modules/
 
 # uploads (contenido subido en runtime)
 uploads/
+
+# imágenes WebP generadas en el build (scripts/optimize-images.mjs)
+public/images/opt/

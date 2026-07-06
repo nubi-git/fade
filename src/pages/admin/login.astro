@@ -1,7 +1,6 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import { Image } from "astro:assets";
-import logoFade from "../../assets/logos/logo_fade.png";
+import OptImage from "../../components/OptImage.astro";
 import { eq } from "drizzle-orm";
 import { db } from "../../lib/db";
 import { users } from "../../lib/db/schema";
@@ -49,7 +48,7 @@ if (Astro.request.method === "POST") {
 
 <AdminLayout title="Ingresar">
   <div class="mx-auto mt-10 max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
-    <Image src={logoFade} alt="FADE Ingeniería" format="webp" class="mb-6 h-12 w-auto" />
+    <OptImage name="logo-fade" widths={[200]} width={200} height={74} sizes="200px" alt="FADE Ingeniería" class="mb-6 h-12 w-auto" />
     <h1 class="text-2xl font-extrabold text-ink">Panel de contenidos</h1>
     <p class="mt-1 text-sm text-body">Ingresá con tu cuenta autorizada.</p>
 
